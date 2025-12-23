@@ -1,5 +1,11 @@
 # next-ws
 
+## 2.1.12
+
+### Patch Changes
+
+- 9bffbf4: Bump patch supported range to 16.1.1
+
 ## 2.1.11
 
 ### Patch Changes
