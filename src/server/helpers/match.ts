@@ -62,12 +62,14 @@ export function findMatchingRoute(
     .sort(([a], [b]) => scoreRoute(b) - scoreRoute(a));
 
   for (const [routePath, [filePath]] of sortedRoutes) {
+    if (!filePath) continue;
     const realPath = `${basePath}${routePath}`;
     const routeParams = getRouteParams(realPath, requestPathname);
     if (routeParams) {
       return { filename: filePath, params: routeParams };
     }
   }
+  return undefined;
 }
 
 function scoreRoute(routePath: string) {
