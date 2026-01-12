@@ -1,5 +1,11 @@
 # next-ws
 
+## 2.1.13
+
+### Patch Changes
+
+- 2f33fe6: Fix incorrect priority on route matching
+
 ## 2.1.12
 
 ### Patch Changes
