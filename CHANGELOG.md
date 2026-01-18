@@ -1,5 +1,12 @@
 # next-ws
 
+## 2.1.14
+
+### Patch Changes
+
+- 50210ec: Bump patch supported range to 16.1.3
+- e893fb2: Bump patch supported range to 16.1.2
+
 ## 2.1.13
 
 ### Patch Changes
