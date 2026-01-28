@@ -1,0 +1,20 @@
+{
+  "name": "@examples/redis-adapter",
+  "private": true,
+  "scripts": {
+    "dev": "tsx --require=\"./global.js\" server.ts",
+    "prepare": "next-ws patch"
+  },
+  "dependencies": {
+    "ioredis": "catalog:",
+    "next": "catalog:",
+    "next-ws": "workspace:^",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "shared": "workspace:^"
+  },
+  "devDependencies": {
+    "@types/react": "catalog:",
+    "tsx": "^4.20.4"
+  }
+}

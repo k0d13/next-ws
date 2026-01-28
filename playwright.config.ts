@@ -30,5 +30,6 @@ export default defineConfig({
       port: 3002,
       reuseExistingServer: !process.env.CI,
     },
+    // Note: redis-adapter tests spawn their own instances
   ],
 });
