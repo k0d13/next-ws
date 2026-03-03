@@ -42,7 +42,7 @@ export default defineCommand({
         patch = patches[patches.length - 1];
         console.info('Proceeding with the latest patch');
         console.log(
-          'If you encounter any issues please report them at https://github.com/apteryxxyz/next-ws/issues',
+          'If you encounter any issues please report them at https://github.com/k0d13/next-ws/issues',
         );
       } else {
         console.error('Aborted');
