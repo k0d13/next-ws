@@ -1,5 +1,11 @@
 # next-ws
 
+## 2.2.0
+
+### Minor Changes
+
+- 4685b45: Add WebSocket adapter support for multi-instance deployments
+
 ## 2.1.17
 
 ### Patch Changes
