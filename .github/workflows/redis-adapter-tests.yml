@@ -3,8 +3,16 @@ name: Redis Adapter Tests
 on:
   push:
     branches: [main]
+    paths: ["package.json", "pnpm-lock.yaml", "src/**", "tests/**", "examples/**/package.json", ".github/workflows/redis-adapter-tests.yml"]
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened]
+    paths: ["package.json", "pnpm-lock.yaml", "src/**", "tests/**", "examples/**/package.json", ".github/workflows/redis-adapter-tests.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   test-redis-adapter:
@@ -22,19 +30,11 @@ jobs:
           --health-retries 5
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.15.0
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Setup Node.js
+        uses: ./.github/actions/node
 
       - name: Build project
         run: pnpm build

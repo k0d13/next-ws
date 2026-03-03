@@ -1,7 +1,7 @@
 {
   "name": "next-ws",
   "version": "2.1.17",
-  "packageManager": "pnpm@10.15.0",
+  "packageManager": "pnpm@10.30.3",
   "description": "Add support for WebSockets in the Next.js app directory",
   "license": "MIT",
   "keywords": ["next", "websocket", "ws", "server", "client"],
@@ -48,7 +48,7 @@
   "dependencies": {
     "jscodeshift": "^17.3.0",
     "minimist": "^1.2.8",
-    "semver": "^7.7.2"
+    "semver": "^7.7.4"
   },
   "peerDependencies": {
     "next": ">=13.5.1",
@@ -58,23 +58,23 @@
   "devDependencies": {
     "@biomejs/biome": "^2.2.0",
     "@changesets/changelog-git": "^0.2.1",
-    "@changesets/cli": "^2.27.12",
+    "@changesets/cli": "^2.30.0",
     "@favware/npm-deprecate": "^2.0.0",
-    "@playwright/test": "^1.55.0",
+    "@playwright/test": "^1.58.2",
     "@types/jscodeshift": "^17.3.0",
     "@types/minimist": "^1.2.5",
-    "@types/node": "^24.3.0",
+    "@types/node": "^24.11.0",
     "@types/react": "catalog:",
-    "@types/semver": "^7.7.0",
+    "@types/semver": "^7.7.1",
     "@types/ws": "^8.18.1",
-    "chalk": "^5.6.0",
+    "chalk": "^5.6.2",
     "husky": "^9.1.7",
-    "ioredis": "^5.8.1",
+    "ioredis": "^5.10.0",
     "next": "catalog:",
     "pinst": "^3.0.0",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "tsup": "^8.5.0",
-    "typescript": "^5.9.2"
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
   }
 }

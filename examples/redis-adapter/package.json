@@ -15,6 +15,6 @@
   },
   "devDependencies": {
     "@types/react": "catalog:",
-    "tsx": "^4.20.4"
+    "tsx": "^4.21.0"
   }
 }

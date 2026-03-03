@@ -3,11 +3,11 @@ name: Pipeline
 on:
   push:
     branches: [main]
-    paths: ["package.json", "src/**", "tests/**"]
+    paths: ["package.json", "pnpm-lock.yaml", "src/**", "tests/**", "examples/**/package.json", ".github/workflows/pipeline.yml"]
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened]
-    paths: ["package.json", "src/**", "tests/**"]
+    paths: ["package.json", "pnpm-lock.yaml", "src/**", "tests/**", "examples/**/package.json", ".github/workflows/pipeline.yml"]
   workflow_dispatch:
 
 concurrency:
@@ -70,7 +70,7 @@ jobs:
         uses: ./.github/actions/node
 
       - name: Run tests
-        uses: docker://mcr.microsoft.com/playwright:v1.55.0-jammy
+        uses: docker://mcr.microsoft.com/playwright:v1.58.2-jammy
         with:
           args: npx playwright test
 
