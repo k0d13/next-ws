@@ -5,13 +5,13 @@
   "description": "Add support for WebSockets in the Next.js app directory",
   "license": "MIT",
   "keywords": ["next", "websocket", "ws", "server", "client"],
-  "homepage": "https://github.com/apteryxxyz/next-ws#readme",
+  "homepage": "https://github.com/k0d13/next-ws#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/apteryxxyz/next-ws.git"
+    "url": "git+https://github.com/k0d13/next-ws.git"
   },
   "bugs": {
-    "url": "https://github.com/apteryxxyz/next-ws/issues"
+    "url": "https://github.com/k0d13/next-ws/issues"
   },
   "bin": {
     "next-ws": "./dist/cli.cjs"

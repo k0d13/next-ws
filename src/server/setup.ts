@@ -83,7 +83,7 @@ export function setupWebSocketServer(
     }
     if (handleSocket)
       logger.warnOnce(
-        'DeprecationWarning: [next-ws] SOCKET is deprecated, prefer UPGRADE instead, see https://github.com/apteryxxyz/next-ws#-usage',
+        'DeprecationWarning: [next-ws] SOCKET is deprecated, prefer UPGRADE instead, see https://github.com/k0d13/next-ws#-usage',
       );
 
     wsServer.handleUpgrade(message, socket, head, async (client) => {

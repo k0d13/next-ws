@@ -8,8 +8,8 @@
   <img alt='package version' src='https://img.shields.io/npm/v/next-ws?label=version'>
   <img alt='total downloads' src='https://img.shields.io/npm/dt/next-ws'>
   <br>
-  <a href='https://github.com/apteryxxyz/next-ws'><img alt='next-ws repo stars' src='https://img.shields.io/github/stars/apteryxxyz/next-ws?style=social'></a>
-  <a href='https://github.com/apteryxxyz'><img alt='apteryxxyz followers' src='https://img.shields.io/github/followers/apteryxxyz?style=social'></a>
+  <a href='https://github.com/k0d13/next-ws'><img alt='next-ws repo stars' src='https://img.shields.io/github/stars/k0d13/next-ws?style=social'></a>
+  <a href='https://github.com/k0d13'><img alt='k0d13 followers' src='https://img.shields.io/github/followers/k0d13?style=social'></a>
   <a href='https://discord.gg/B2rEQ9g2vf'><img src='https://discordapp.com/api/guilds/829836158007115806/widget.png?style=shield' alt='discord shield'/></a>
 </div>
 
@@ -66,7 +66,7 @@ export function UPGRADE(
 ## 🌀 Examples
 
 > [!TIP]  
-> For more detailed examples, refer the [`examples` directory](https://github.com/apteryxxyz/next-ws/tree/main/examples).
+> For more detailed examples, refer the [`examples` directory](https://github.com/k0d13/next-ws/tree/main/examples).
 
 ### Echo Server
 
@@ -96,4 +96,4 @@ You can now connect to your WebSocket server, send it a message and receive the 
 
 ### Chat Room
 
-See the [chat room example](https://github.com/apteryxxyz/next-ws/tree/main/examples/chat-room).
+See the [chat room example](https://github.com/k0d13/next-ws/tree/main/examples/chat-room).
