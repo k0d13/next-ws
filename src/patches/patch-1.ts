@@ -21,7 +21,8 @@ export const patchNextNodeServer = definePatchStep({
       try { nextWs ??= require('next-ws/server') } catch {}
       try { nextWs ??= require(require.resolve('next-ws/server', { paths: [process.cwd()] }) )} catch {}
       try { nextWs ??= require('${resolveNextWsDirectory().replaceAll(sep, '/').replaceAll("'", "\\'")}/dist/server/index.cjs') } catch {}
-      nextWs?.setupWebSocketServer(this);
+      const adapter = nextWs?.getAdapter?.();
+      nextWs?.setupWebSocketServer(this, adapter ? { adapter } : undefined);
     `);
     const block = $.blockStatement(snippet.nodes()[0].program.body);
 

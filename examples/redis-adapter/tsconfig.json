@@ -1,6 +1,12 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig.json",
-  "include": ["app/**/*", ".next/types/**/*.ts", ".next/dev/types/**/*.ts"],
+  "include": [
+    "app/**/*",
+    ".next/instance-1/types/**/*.ts",
+    ".next/instance-1/dev/types/**/*.ts",
+    ".next/instance-2/types/**/*.ts",
+    ".next/instance-2/dev/types/**/*.ts"
+  ],
   "exclude": ["node_modules", ".next"],
   "compileOnSave": true,
   "compilerOptions": {
@@ -42,9 +48,6 @@
     "skipLibCheck": true,
     "jsx": "react-jsx",
     "outDir": "./dist",
-    "paths": {
-      "~/*": ["./src/*"]
-    },
     "plugins": [
       {
         "name": "next"

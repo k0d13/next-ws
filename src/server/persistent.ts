@@ -92,3 +92,29 @@ export {
    */
   useRequestStorage,
 };
+
+// ===== Adapter ===== //
+
+const [getAdapter, setAdapter, useAdapter] = //
+  useGlobal<import('./helpers/adapter').Adapter | undefined>(
+    Symbol.for('next-ws.adapter'), //
+  );
+
+export {
+  /**
+   * Get the adapter instance.
+   * @returns Existing adapter instance if set
+   */
+  getAdapter,
+  /**
+   * Set the adapter instance.
+   * @param value Adapter instance
+   */
+  setAdapter,
+  /**
+   * Get or set the adapter instance.
+   * @param getter Function to get the adapter instance
+   * @returns Existing or created adapter instance
+   */
+  useAdapter,
+};
