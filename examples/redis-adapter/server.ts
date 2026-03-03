@@ -41,7 +41,7 @@ class RedisAdapter implements Adapter {
       this.handlers.set(room, new Set());
       await this.sub.subscribe(room);
     }
-    this.handlers.get(room)!.add(handler);
+    this.handlers.get(room)?.add(handler);
   }
 
   async close(): Promise<void> {
