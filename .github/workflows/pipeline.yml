@@ -136,4 +136,3 @@ jobs:
         run: |
           pnpm run release:snapshot:version
           pnpm run release:snapshot:publish
-        continue-on-error: true
