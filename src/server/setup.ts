@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import * as logger from 'next/dist/build/output/log.js';
 import type NextNodeServer from 'next/dist/server/next-server.js';
-import * as import_ws from 'ws';
+import * as ws from 'ws';
 import type { Adapter } from './helpers/adapter.js';
 import { findMatchingRoute } from './helpers/match.js';
 import { importRouteModule } from './helpers/module.js';
@@ -14,8 +14,7 @@ import {
 } from './persistent.js';
 
 const WebSocketServer =
-  import_ws.WebSocketServer ||
-  (import_ws as { Server?: typeof import_ws.WebSocketServer }).Server;
+  ws.WebSocketServer || (ws as { Server?: typeof ws.WebSocketServer }).Server;
 
 export interface SetupOptions {
   adapter?: Adapter;
@@ -53,7 +52,7 @@ export function setupWebSocketServer(
   Reflect.set(httpServer, kAttached, true);
 
   // Store route -> clients mapping for adapter broadcasts
-  const routeClients = new Map<string, Set<import_ws.WebSocket>>();
+  const routeClients = new Map<string, Set<ws.WebSocket>>();
 
   httpServer.on('upgrade', async (message, socket, head) => {
     const request = toNextRequest(message);
@@ -101,7 +100,7 @@ export function setupWebSocketServer(
             if (!clients) return;
 
             for (const localClient of clients) {
-              if (localClient.readyState === import_ws.OPEN) {
+              if (localClient.readyState === ws.WebSocket.OPEN) {
                 localClient.send(
                   typeof message === 'string'
                     ? message

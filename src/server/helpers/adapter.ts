@@ -38,7 +38,10 @@ export interface Adapter {
    * @param room Room identifier to subscribe to
    * @param handler Callback invoked when messages arrive for this room
    */
-  onMessage(room: string, handler: (message: unknown) => void): void | Promise<void>;
+  onMessage(
+    room: string,
+    handler: (message: unknown) => void,
+  ): void | Promise<void>;
 
   /**
    * Clean up adapter resources (close connections, unsubscribe, etc.)
