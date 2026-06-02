@@ -1,15 +1,7 @@
 name: Redis Adapter Tests
 
 on:
-  push:
-    branches: [main]
-    paths: ["package.json", "pnpm-lock.yaml", "src/**", "tests/**", "examples/**/package.json", ".github/workflows/redis-adapter-tests.yml"]
-  pull_request:
-    branches: [main]
-    types: [opened, synchronize, reopened]
-    paths: ["package.json", "pnpm-lock.yaml", "src/**", "tests/**", "examples/**/package.json", ".github/workflows/redis-adapter-tests.yml"]
   workflow_dispatch:
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
