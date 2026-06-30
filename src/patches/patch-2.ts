@@ -21,7 +21,7 @@ export const patchCookies = definePatchStep({
 
 export default definePatch({
   name: 'patch-2',
-  versions: '>=15.0.0 <=16.2.7',
+  versions: '>=15.0.0 <=16.2.9',
   steps: [
     p1_patchNextNodeServer,
     p1_patchRouterServer,
