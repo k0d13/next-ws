@@ -1,5 +1,12 @@
 # next-ws
 
+## 2.2.8
+
+### Patch Changes
+
+- 15d0c44: Bump patch supported range to 16.2.9
+- 9512353: Bump patch supported range to 16.2.7
+
 ## 2.2.7
 
 ### Patch Changes
