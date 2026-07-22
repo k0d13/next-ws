@@ -1,5 +1,12 @@
 # next-ws
 
+## 2.2.9
+
+### Patch Changes
+
+- f6440a8: Bump patch supported range to 16.2.10
+- bfb64a5: Bump patch supported range to 16.2.11
+
 ## 2.2.8
 
 ### Patch Changes
