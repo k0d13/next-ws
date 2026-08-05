@@ -1,5 +1,11 @@
 # next-ws
 
+## 2.2.11
+
+### Patch Changes
+
+- 4ed1554: Bump patch supported range to 16.3.0
+
 ## 2.2.10
 
 ### Patch Changes
