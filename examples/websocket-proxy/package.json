@@ -1,0 +1,21 @@
+{
+  "name": "@examples/websocket-proxy",
+  "private": true,
+  "scripts": {
+    "build": "next build",
+    "start": "next start",
+    "dev": "next dev",
+    "prepare": "next-ws patch"
+  },
+  "dependencies": {
+    "next": "catalog:",
+    "next-ws": "workspace:^",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "@types/react": "catalog:",
+    "@types/ws": "^8.18.1"
+  }
+}

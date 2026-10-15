@@ -99,6 +99,10 @@ You can now connect to your WebSocket server, send it a message and receive the 
 
 See the [chat room example](https://github.com/k0d13/next-ws/tree/main/examples/chat-room).
 
+### WebSocket Proxy
+
+Forward connections to another WebSocket server, using a catch-all route to keep the rest of the path. See the [websocket proxy example](https://github.com/k0d13/next-ws/tree/main/examples/websocket-proxy).
+
 ## 🔒 HTTPS and `wss://`
 
 Next WS doesn't handle TLS itself. It listens for upgrade requests on the same HTTP server that Next.js uses, so `wss://` works whenever that server is reachable over HTTPS.
