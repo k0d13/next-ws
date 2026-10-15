@@ -1,5 +1,13 @@
 # next-ws
 
+## 2.2.17
+
+### Patch Changes
+
+- 241c0f4: Fix WebSocket upgrades hanging on the first connection to a route after a fresh process start.
+- f7dcda8: Bump patch supported range to 16.3.8
+- 70c3a71: Bump patch supported range to 16.3.7
+
 ## 2.2.16
 
 ### Patch Changes
