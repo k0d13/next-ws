@@ -10,10 +10,13 @@ import { getNextDist } from './next-dist.js';
 
 // Steps resolve `next:` paths and the next-ws directory through these, so point
 // them at the downloaded package and at a path that is the same on every machine
-const state = vi.hoisted(() => ({ nextDirectory: '' }));
+const state = vi.hoisted(() => ({
+  nextDirectory: '',
+  nextWsDirectory: '/path/to/node_modules/next-ws',
+}));
 vi.mock('~/patches/helpers/next.js', () => ({
   resolveNextDirectory: () => state.nextDirectory,
-  resolveNextWsDirectory: () => '/path/to/node_modules/next-ws',
+  resolveNextWsDirectory: () => state.nextWsDirectory,
 }));
 
 const { default: patches } = await import('~/patches/index.js');
@@ -102,6 +105,19 @@ describe.each(targets)('$patch.name on next@$version ($label)', ({ patch, label,
 
   it('produces code that still compiles', () => {
     for (const [path, code] of patched) expect(compiles(code), path).toBe(true);
+  });
+
+  it('handles quotes in the next-ws path', async () => {
+    const directory = state.nextWsDirectory;
+    state.nextWsDirectory = "/home/O'Brien/node_modules/next-ws";
+    try {
+      for (const step of patch.steps) {
+        const code = await step.transform(original.get(relative(step.path))!);
+        expect(compiles(code), step.title).toBe(true);
+      }
+    } finally {
+      state.nextWsDirectory = directory;
+    }
   });
 
   it('is idempotent', async () => {

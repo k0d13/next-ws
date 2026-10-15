@@ -88,20 +88,28 @@ export function setupWebSocketServer(nextServer: NextNodeServer, options?: Setup
           client.emit = AsyncResource.bind(client.emit, 'next-ws.client', client);
 
           if (rooms) {
-            await rooms.join(pathname, client);
-            client.on('message', (data, isBinary) => {
-              rooms.publish(pathname, client, data, isBinary).catch((cause: unknown) => {
-                logger.error(`[next-ws] adapter could not broadcast for '${pathname}'`, cause);
-              });
-            });
+            // Listen before joining, so a client that closes while the adapter subscribes still
+            // leaves and the room can empty out
             client.once('close', () => {
               rooms.leave(pathname, client).catch((cause: unknown) => {
                 logger.error(`[next-ws] adapter could not unsubscribe from '${pathname}'`, cause);
               });
             });
+            await rooms.join(pathname, client);
+            if (client.readyState !== client.OPEN) return;
           }
 
           await handler(client, wsServer, request, { params: route.params });
+
+          // Only forward once the handler has accepted the client, it may close clients that
+          // fail a session check after awaiting it
+          if (rooms && client.readyState === client.OPEN) {
+            client.on('message', (data, isBinary) => {
+              rooms.publish(pathname, client, data, isBinary).catch((cause: unknown) => {
+                logger.error(`[next-ws] adapter could not broadcast for '${pathname}'`, cause);
+              });
+            });
+          }
         })
         .catch((cause: unknown) => {
           logger.error(`[next-ws] error in socket handler for '${pathname}'`, cause);

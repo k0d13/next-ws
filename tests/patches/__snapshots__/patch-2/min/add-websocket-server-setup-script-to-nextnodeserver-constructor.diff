@@ -23,7 +23,7 @@
 +            let nextWs;
 +            try { nextWs ??= require('next-ws/server') } catch {}
 +            try { nextWs ??= require(require.resolve('next-ws/server', { paths: [process.cwd()] }) )} catch {}
-+            try { nextWs ??= require('/path/to/node_modules/next-ws/dist/server/index.cjs') } catch {}
++            try { nextWs ??= require("/path/to/node_modules/next-ws/dist/server/index.cjs") } catch {}
 +            const adapter = nextWs?.getAdapter?.();
 +            nextWs?.setupWebSocketServer(this, adapter ? { adapter } : undefined);
 +        }

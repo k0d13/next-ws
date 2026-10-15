@@ -288,6 +288,61 @@ describe('adapter', () => {
     expect(handler).not.toHaveBeenCalled();
   });
 
+  it('does not forward messages until UPGRADE has finished', async () => {
+    const adapter = createAdapter();
+    let accept!: () => void;
+    const accepted = new Promise<void>((r) => (accept = r));
+    route('/chat', { UPGRADE: () => accepted });
+    setupWebSocketServer(createNextServer(), { adapter });
+    const a = await open('/chat');
+    const b = await open('/chat');
+    await vi.waitFor(() => expect(adapter.subscribe).toHaveBeenCalledOnce());
+
+    a.socket.send('too early');
+    await new Promise((r) => setTimeout(r, 50));
+    expect(adapter.broadcast).not.toHaveBeenCalled();
+
+    accept();
+    await new Promise((r) => setTimeout(r, 0));
+    a.socket.send('hello');
+    expect(await nextMessage(b.socket)).toBe('hello');
+    a.socket.close();
+    b.socket.close();
+  });
+
+  it('does not forward messages from clients UPGRADE rejected', async () => {
+    const adapter = createAdapter();
+    route('/chat', {
+      UPGRADE: async (client) => {
+        await new Promise((r) => setTimeout(r, 20));
+        client.close(1008, 'Sign in first');
+      },
+    });
+    setupWebSocketServer(createNextServer(), { adapter });
+    const { socket } = await open('/chat');
+    socket.send('hello');
+    expect(await closed(socket)).toBe(1008);
+    expect(adapter.broadcast).not.toHaveBeenCalled();
+  });
+
+  it('leaves and skips UPGRADE when the client closes while subscribing', async () => {
+    const adapter = createAdapter();
+    let subscribed!: () => void;
+    adapter.subscribe.mockImplementationOnce(() => new Promise<void>((r) => (subscribed = r)));
+    const handler = vi.fn();
+    route('/chat', { UPGRADE: handler });
+    setupWebSocketServer(createNextServer(), { adapter });
+    const { socket } = await open('/chat');
+    await vi.waitFor(() => expect(adapter.subscribe).toHaveBeenCalledOnce());
+
+    socket.close();
+    await closed(socket);
+    await vi.waitFor(() => expect(getWebSocketServer()?.clients.size).toBe(0));
+    subscribed();
+    await vi.waitFor(() => expect(adapter.unsubscribe).toHaveBeenCalledWith('/chat'));
+    expect(handler).not.toHaveBeenCalled();
+  });
+
   it('logs failed broadcasts without closing the client', async () => {
     const adapter = createAdapter();
     adapter.broadcast.mockRejectedValueOnce(new Error('Redis is down'));

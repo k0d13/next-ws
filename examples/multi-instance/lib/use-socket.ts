@@ -36,9 +36,11 @@ export function useSocket(path: string, onMessage: (data: string) => void) {
       };
       socket.onmessage = (event) => onMessageRef.current(String(event.data));
       socket.onclose = (event) => {
+        // A socket from before the path changed can finish closing after its replacement opens
+        if (stopped) return;
         setStatus('closed');
         // 1008 means the server refused us, so retrying cannot help
-        if (stopped || event.code === 1008) return;
+        if (event.code === 1008) return;
         retry = setTimeout(connect, Math.min(1000 * 2 ** attempt++, 15_000));
       };
     }

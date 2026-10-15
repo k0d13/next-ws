@@ -19,6 +19,8 @@ export function Reactions() {
 
   function show(emoji: Emoji) {
     setCounts((previous) => ({ ...previous, [emoji]: (previous[emoji] ?? 0) + 1 }));
+    // The stage is hidden with reduced motion, so the animation that removes each one never ends
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const item = { id: nextId++, emoji, left: 10 + Math.random() * 80 };
     setFloating((previous) => [...previous, item]);
   }

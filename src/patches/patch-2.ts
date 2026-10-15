@@ -16,12 +16,16 @@ export const patchNextNodeServer = definePatchStep({
   path: 'next:dist/server/next-server.js',
   async transform(code) {
     const marker = '@patch attach-websocket-server';
+    // A string literal, so quotes or backslashes in the install path can't break the snippet
+    const serverPath = JSON.stringify(
+      `${resolveNextWsDirectory().replaceAll(sep, '/')}/dist/server/index.cjs`,
+    );
     const snippet = $(`
       // ${marker}
       let nextWs;
       try { nextWs ??= require('next-ws/server') } catch {}
       try { nextWs ??= require(require.resolve('next-ws/server', { paths: [process.cwd()] }) )} catch {}
-      try { nextWs ??= require('${resolveNextWsDirectory().replaceAll(sep, '/').replaceAll("'", "'")}/dist/server/index.cjs') } catch {}
+      try { nextWs ??= require(${serverPath}) } catch {}
       const adapter = nextWs?.getAdapter?.();
       nextWs?.setupWebSocketServer(this, adapter ? { adapter } : undefined);
     `);
