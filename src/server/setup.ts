@@ -3,7 +3,7 @@ import { type IncomingMessage, STATUS_CODES } from 'node:http';
 import type { Duplex } from 'node:stream';
 import * as logger from 'next/dist/build/output/log.js';
 import type NextNodeServer from 'next/dist/server/next-server.js';
-import * as ws from 'ws';
+import { WebSocketServer } from 'ws';
 import type { Adapter } from './helpers/adapter.js';
 import { findMatchingRoute } from './helpers/match.js';
 import { importRouteModule } from './helpers/module.js';
@@ -11,8 +11,6 @@ import { toNextRequest } from './helpers/request.js';
 import { Rooms } from './helpers/rooms.js';
 import { createRequestStore } from './helpers/store.js';
 import { useHttpServer, useRequestStorage, useWebSocketServer } from './persistent.js';
-
-const WebSocketServer = ws.WebSocketServer || (ws as { Server?: typeof ws.WebSocketServer }).Server;
 
 export interface SetupOptions {
   adapter?: Adapter;

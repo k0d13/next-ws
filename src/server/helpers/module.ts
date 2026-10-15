@@ -1,3 +1,4 @@
+import { createRequire } from 'node:module';
 import * as logger from 'next/dist/build/output/log.js';
 import type NextNodeServer from 'next/dist/server/next-server.js';
 import type { UpgradeHandler } from './socket.js';
@@ -19,7 +20,9 @@ export async function importRouteModule(nextServer: NextNodeServer, filePathname
   try {
     // @ts-expect-error - getPagePath is protected
     const buildPagePath = nextServer.getPagePath(filePathname);
-    const routeModule = (await require(buildPagePath)).routeModule as RouteModule;
+    // Compiled routes are CommonJS, and this has to work from the ESM build too
+    const routeModule = (await createRequire(buildPagePath)(buildPagePath))
+      .routeModule as RouteModule;
     await routeModule?.ensureUserland?.();
     return routeModule;
   } catch (cause) {

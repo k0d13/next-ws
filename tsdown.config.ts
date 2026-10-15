@@ -3,8 +3,9 @@ import { defineConfig } from 'tsdown';
 export default defineConfig([
   {
     entry: { 'server/index': 'src/server/index.ts' },
-    // Keep the extension as .cjs as to not break the require() calls in the patches
-    format: 'cjs',
+    // Patched Next.js code requires dist/server/index.cjs, so that path must not change. The ESM
+    // build gives ESM projects types that agree with their own `ws` types
+    format: ['cjs', 'esm'],
     platform: 'node',
     dts: true,
   },
