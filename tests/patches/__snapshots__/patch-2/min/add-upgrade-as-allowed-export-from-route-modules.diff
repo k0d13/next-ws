@@ -1,0 +1,13 @@
+# next@15.0.0
+===================================================================
+--- a/dist/build/webpack/plugins/next-types-plugin/index.js
++++ b/dist/build/webpack/plugins/next-types-plugin/index.js
+@@ -41,7 +41,7 @@
+ 
+ // Check that the entry is a valid entry
+ checkFields<Diff<{
+-  ${options.type === 'route' ? _http.HTTP_METHODS.map((method)=>`${method}?: Function`).join('\n  ') : 'default: Function'}
++  ${options.type === 'route' ? [..._http.HTTP_METHODS, "UPGRADE", "SOCKET"].map((method)=>`${method}?: Function`).join('\n  ') : 'default: Function'}
+   config?: {}
+   generateStaticParams?: Function
+   revalidate?: RevalidateRange<TEntry> | false

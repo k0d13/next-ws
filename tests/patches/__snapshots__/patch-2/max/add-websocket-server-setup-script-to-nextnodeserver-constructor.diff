@@ -1,0 +1,65 @@
+# next@16.4.2
+===================================================================
+--- a/dist/server/next-server.js
++++ b/dist/server/next-server.js
+@@ -449,8 +449,8 @@
+      * Using this from process.env allows targeting SSR by calling
+      * `process.env.__NEXT_OPTIMIZE_CSS`.
+      */ if (this.renderOpts.optimizeCss) {
+-            process.env.__NEXT_OPTIMIZE_CSS = JSON.stringify(true);
+-        }
++                process.env.__NEXT_OPTIMIZE_CSS = JSON.stringify(true);
++            }
+         if (this.renderOpts.nextScriptWorkers) {
+             process.env.__NEXT_SCRIPT_WORKERS = JSON.stringify(true);
+         }
+@@ -512,6 +512,16 @@
+         }
+         const shouldRemoveUncaughtErrorAndRejectionListeners = Boolean((_options_conf_experimental1 = options.conf.experimental) == null ? void 0 : _options_conf_experimental1.removeUncaughtErrorAndRejectionListeners);
+         (0, _processerrorhandlers.installProcessErrorHandlers)(shouldRemoveUncaughtErrorAndRejectionListeners);
++
++        {
++            // @patch attach-websocket-server
++            let nextWs;
++            try { nextWs ??= require('next-ws/server') } catch {}
++            try { nextWs ??= require(require.resolve('next-ws/server', { paths: [process.cwd()] }) )} catch {}
++            try { nextWs ??= require('/path/to/node_modules/next-ws/dist/server/index.cjs') } catch {}
++            const adapter = nextWs?.getAdapter?.();
++            nextWs?.setupWebSocketServer(this, adapter ? { adapter } : undefined);
++        }
+     }
+     async unstable_preloadEntries() {
+         // Ensure prepare process will be finished before preloading entries.
+@@ -855,9 +865,9 @@
+                 return {
+                     components,
+                     query: {
+-                        ...!this.renderOpts.isExperimentalCompile && components.getStaticProps ? {} : query,
++                        ...(!this.renderOpts.isExperimentalCompile && components.getStaticProps ? {} : query),
+                         // For appDir params is excluded.
+-                        ...(isAppPath ? {} : params) || {}
++                        ...((isAppPath ? {} : params) || {})
+                     }
+                 };
+             } catch (err) {
+@@ -1170,7 +1180,7 @@
+                 finished: false
+             };
+         }
+-        if (!await this.hasMiddleware(middleware.page)) {
++        if (!(await this.hasMiddleware(middleware.page))) {
+             return {
+                 finished: false
+             };
+@@ -1362,9 +1372,9 @@
+                 url,
+                 page: {
+                     name: params.page,
+-                    ...params.params && {
++                    ...(params.params && {
+                         params: params.params
+-                    }
++                    })
+                 },
+                 body: (0, _requestmeta.getRequestMeta)(params.req, 'clonableBody'),
+                 signal: (0, _nextrequest.signalFromNodeResponse)(params.res.originalResponse),

@@ -1,0 +1,19 @@
+# next@13.5.1
+===================================================================
+--- a/dist/client/components/headers.js
++++ b/dist/client/components/headers.js
+@@ -52,6 +52,14 @@
+     return requestStore.headers;
+ }
+ function cookies() {
++    {
++        // @patch cookies
++        const kRequestStorage = Symbol.for('next-ws.request-store');
++        const requestStorage = Reflect.get(globalThis, kRequestStorage);
++        const contextualCookies = requestStorage?.getStore()?.cookies;
++        if (contextualCookies) return contextualCookies;
++    }
++
+     if ((0, _staticgenerationbailout.staticGenerationBailout)("cookies", {
+         link: "https://nextjs.org/docs/app/building-your-application/rendering/static-and-dynamic#dynamic-rendering"
+     })) {

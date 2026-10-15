@@ -1,6 +1,7 @@
 packages:
   - '.'
   - 'examples/*'
+  - 'tests/integration'
 
 catalog:
   next: '16.4.2'

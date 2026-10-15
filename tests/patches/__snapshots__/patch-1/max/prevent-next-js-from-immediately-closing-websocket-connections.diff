@@ -1,0 +1,16 @@
+# next@14.2.32
+===================================================================
+--- a/dist/server/lib/router-server.js
++++ b/dist/server/lib/router-server.js
+@@ -480,7 +480,10 @@
+             // TODO: allow upgrade requests to pages/app paths?
+             // this was not previously supported
+             if (matchedOutput) {
+-                return socket.end();
++                return (
++                    // socket.end()
++                    (void 0)
++                );
+             }
+             if (parsedUrl.protocol) {
+                 return await (0, _proxyrequest.proxyRequest)(req, socket, parsedUrl, head);

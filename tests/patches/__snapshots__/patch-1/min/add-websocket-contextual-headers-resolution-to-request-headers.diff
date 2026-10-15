@@ -1,0 +1,19 @@
+# next@13.5.1
+===================================================================
+--- a/dist/client/components/headers.js
++++ b/dist/client/components/headers.js
+@@ -32,6 +32,14 @@
+ const _staticgenerationbailout = require("./static-generation-bailout");
+ const _draftmode = require("./draft-mode");
+ function headers() {
++    {
++        // @patch headers
++        const kRequestStorage = Symbol.for('next-ws.request-store');
++        const requestStorage = Reflect.get(globalThis, kRequestStorage);
++        const contextualHeaders = requestStorage?.getStore()?.headers;
++        if (contextualHeaders) return contextualHeaders;
++    }
++
+     if ((0, _staticgenerationbailout.staticGenerationBailout)("headers", {
+         link: "https://nextjs.org/docs/app/building-your-application/rendering/static-and-dynamic#dynamic-rendering"
+     })) {

@@ -1,0 +1,19 @@
+# next@16.4.2
+===================================================================
+--- a/dist/server/request/headers.js
++++ b/dist/server/request/headers.js
+@@ -19,6 +19,14 @@
+ const _invarianterror = require("../../shared/lib/invariant-error");
+ const _usecachemessages = require("../use-cache/use-cache-messages");
+ function headers() {
++    {
++        // @patch headers
++        const kRequestStorage = Symbol.for('next-ws.request-store');
++        const requestStorage = Reflect.get(globalThis, kRequestStorage);
++        const contextualHeaders = requestStorage?.getStore()?.headers;
++        if (contextualHeaders) return contextualHeaders;
++    }
++
+     const callingExpression = 'headers';
+     const workStore = _workasyncstorageexternal.workAsyncStorage.getStore();
+     const workUnitStore = _workunitasyncstorageexternal.workUnitAsyncStorage.getStore();
