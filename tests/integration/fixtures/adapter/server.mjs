@@ -19,21 +19,21 @@ class RedisAdapter {
     const { default: Redis } = await import('ioredis');
     this.pub = new Redis(process.env.REDIS_URL);
     this.sub = new Redis(process.env.REDIS_URL);
-    this.sub.on('message', (room, message) => {
-      for (const handler of this.handlers.get(room) ?? []) handler(message);
-    });
+    this.sub.on('message', (room, message) => this.handlers.get(room)?.(message));
   }
 
   async broadcast(room, message) {
-    await this.pub.publish(room, Buffer.isBuffer(message) ? message.toString() : String(message));
+    await this.pub.publish(room, message);
   }
 
-  async onMessage(room, handler) {
-    if (!this.handlers.has(room)) {
-      this.handlers.set(room, new Set());
-      await this.sub.subscribe(room);
-    }
-    this.handlers.get(room).add(handler);
+  async subscribe(room, handler) {
+    this.handlers.set(room, handler);
+    await this.sub.subscribe(room);
+  }
+
+  async unsubscribe(room) {
+    this.handlers.delete(room);
+    await this.sub.unsubscribe(room);
   }
 
   async close() {
@@ -54,7 +54,7 @@ class BrokerAdapter {
     this.socket = new WebSocket(process.env.BROKER_URL);
     this.socket.on('message', (data) => {
       const { room, message } = JSON.parse(data.toString());
-      for (const handler of this.handlers.get(room) ?? []) handler(message);
+      this.handlers.get(room)?.(message);
     });
     await new Promise((resolve, reject) => {
       this.socket.once('open', resolve);
@@ -62,20 +62,21 @@ class BrokerAdapter {
     });
   }
 
-  async broadcast(room, message) {
-    message = Buffer.isBuffer(message) ? message.toString() : String(message);
+  broadcast(room, message) {
     this.socket.send(JSON.stringify({ type: 'publish', room, message }));
   }
 
-  async onMessage(room, handler) {
-    if (!this.handlers.has(room)) {
-      this.handlers.set(room, new Set());
-      this.socket.send(JSON.stringify({ type: 'subscribe', room }));
-    }
-    this.handlers.get(room).add(handler);
+  subscribe(room, handler) {
+    this.handlers.set(room, handler);
+    this.socket.send(JSON.stringify({ type: 'subscribe', room }));
   }
 
-  async close() {
+  unsubscribe(room) {
+    this.handlers.delete(room);
+    this.socket.send(JSON.stringify({ type: 'unsubscribe', room }));
+  }
+
+  close() {
     this.socket.close();
   }
 }

@@ -71,7 +71,7 @@ describe('toNextRequest', () => {
     expect(request.signal.aborted).toBe(true);
   });
 
-  // Bug 2 in the handoff: a malformed Host header throws, and the caller does not catch it
+  // setupWebSocketServer catches this and rejects the upgrade with 400
   it('throws for a malformed Host header', () => {
     expect(() => toNextRequest(createMessage({ headers: { host: 'a b' } }))).toThrow();
   });

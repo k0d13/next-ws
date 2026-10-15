@@ -79,6 +79,16 @@ describe.each(modes)(`adapter with ${backend} (%s)`, (mode) => {
     await Promise.all([a.close(), b.close()]);
   });
 
+  it('keeps binary messages binary across instances', async () => {
+    const a = await join(one);
+    const b = await join(two);
+    a.send(Buffer.from([0, 1, 255]));
+    const { data, isBinary } = await b.raw();
+    expect(isBinary).toBe(true);
+    expect([...(data as Buffer)]).toEqual([0, 1, 255]);
+    await Promise.all([a.close(), b.close()]);
+  });
+
   it('keeps rooms separate', async () => {
     const a = await join(one, '/api/rooms/general');
     const b = await join(two, '/api/rooms/general');

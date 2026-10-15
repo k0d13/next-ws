@@ -35,6 +35,9 @@ export function failure(...message: unknown[]) {
  * @returns A promise that resolves to a boolean indicating whether the user confirmed or denied
  */
 export async function confirm(...message: unknown[]) {
+  // Nobody can answer without a terminal, such as in CI or a `prepare` script
+  if (!process.stdin.isTTY) return false;
+
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -50,6 +53,8 @@ export async function confirm(...message: unknown[]) {
       else resolve(false);
       rl.close();
     });
+    // Closing the input, such as with Ctrl+D, counts as a no
+    rl.once('close', () => resolve(false));
   });
 }
 

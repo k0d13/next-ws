@@ -30,11 +30,11 @@ describe('defineCommand', () => {
     expect(command.options).toHaveLength(1);
   });
 
-  it('runs the action with no options', () => {
+  it('runs the action with every flag off', () => {
     const { command, action } = createCommand();
     command.parse([], []);
     expect(action).toHaveBeenCalledOnce();
-    expect(action.mock.calls[0]?.[0]).not.toHaveProperty('yes');
+    expect(action).toHaveBeenCalledWith(expect.objectContaining({ yes: false }));
   });
 
   it('passes long options to the action', () => {
@@ -43,8 +43,7 @@ describe('defineCommand', () => {
     expect(action).toHaveBeenCalledWith(expect.objectContaining({ yes: true }));
   });
 
-  // Bug: `minimist` is called without the aliases from the option definitions
-  it.fails('passes aliased options to the action under their full name', () => {
+  it('passes aliased options to the action under their full name', () => {
     const { command, action } = createCommand();
     command.parse([], ['-y']);
     expect(action).toHaveBeenCalledWith(expect.objectContaining({ yes: true }));
@@ -65,7 +64,7 @@ describe('defineCommand', () => {
     expect(help).toContain('Usage: next-ws patch [options]');
     expect(help).toContain('Patch the thing');
     expect(help).toContain('--help');
-    expect(help).toContain('--yes | Skip the prompt');
+    expect(help).toContain('--yes, -y | Skip the prompt');
   });
 
   it('returns the result of the action', async () => {

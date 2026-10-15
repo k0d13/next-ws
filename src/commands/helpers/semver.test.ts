@@ -30,8 +30,7 @@ describe('maxVersion', () => {
     expect(maxVersion('>=15.0.0')).toBeNull();
   });
 
-  // Bug: `<17.0.0` produces `17.0.-1` instead of a version below 17
-  it.fails('returns a valid version for an exclusive bound on a .0 patch', () => {
+  it('returns a valid version for an exclusive bound on a .0 patch', () => {
     const version = maxVersion('>=16.0.0 <17.0.0');
     expect(version?.patch).toBeGreaterThanOrEqual(0);
     expect(version?.major).toBe(16);

@@ -15,6 +15,8 @@ export async function startBroker() {
       if (type === 'subscribe') {
         if (!rooms.has(room)) rooms.set(room, new Set());
         rooms.get(room)!.add(socket);
+      } else if (type === 'unsubscribe') {
+        rooms.get(room)?.delete(socket);
       } else if (type === 'publish') {
         for (const subscriber of rooms.get(room) ?? [])
           subscriber.send(JSON.stringify({ room, message }));

@@ -24,7 +24,15 @@ export function maxVersion(range: Range | string, loose?: Options | boolean) {
       const version = new SemVer(version_);
 
       if (operator === '<') {
-        version.patch--;
+        // The highest version below an exclusive bound, `<17.0.0` gives 16.MAX.MAX
+        if (version.patch > 0) version.patch--;
+        else if (version.minor > 0) {
+          version.minor--;
+          version.patch = Number.MAX_SAFE_INTEGER;
+        } else {
+          version.major--;
+          version.minor = version.patch = Number.MAX_SAFE_INTEGER;
+        }
         version.raw = version.format();
       }
 

@@ -4,7 +4,9 @@ import { findMatchingRoute } from './match.js';
 
 /** Build the parts of a Next.js server that route matching reads. */
 function createServer(routes: string[], options: { basePath?: string } = {}) {
-  const appPathRoutes = Object.fromEntries(routes.map((r) => [r, [`app${r}/route`]]));
+  const appPathRoutes = Object.fromEntries(
+    routes.map((r) => [r, [`app${r === '/' ? '' : r}/route`]]),
+  );
   return {
     serverOptions: { conf: { basePath: options.basePath ?? '' } },
     appPathRoutes,
@@ -101,8 +103,7 @@ describe('findMatchingRoute', () => {
       });
     });
 
-    // Bug: params are passed through still URI encoded
-    it.fails('decodes parameter values', () => {
+    it('decodes parameter values', () => {
       const server = createServer(['/rooms/[room]']);
       expect(findMatchingRoute(server, '/rooms/hello%20world')?.params).toEqual({
         room: 'hello world',
@@ -164,8 +165,7 @@ describe('findMatchingRoute', () => {
 
   // ===== Root ===== //
 
-  // Bug: `/` is trimmed to an empty string before it is tested against `^/$`
-  it.fails('matches a root route', () => {
+  it('matches a root route', () => {
     const server = createServer(['/']);
     expect(findMatchingRoute(server, '/')?.filename).toBe('app/route');
   });

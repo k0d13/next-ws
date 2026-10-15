@@ -2,7 +2,7 @@ import { defineConfig } from 'tsdown';
 
 export default defineConfig([
   {
-    entry: { 'client/index': 'src/client/index.ts', 'server/index': 'src/server/index.ts' },
+    entry: { 'server/index': 'src/server/index.ts' },
     // Keep the extension as .cjs as to not break the require() calls in the patches
     format: 'cjs',
     platform: 'node',

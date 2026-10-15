@@ -39,6 +39,8 @@ export default defineConfig({
           testTimeout: 60_000,
           hookTimeout: 300_000,
           maxWorkers: process.env.CI ? 2 : 4,
+          // Run after the fast projects, which can share workers
+          sequence: { groupOrder: 1 },
         },
       },
     ],
