@@ -1,6 +1,7 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import * as console from '~/commands/helpers/console.js';
+import { writeFileAtomic } from './fs.js';
 import { resolveNextDirectory } from './next.js';
 
 export interface PatchDefinition {
@@ -54,7 +55,7 @@ export function definePatchStep(definition: PatchStepDefinition): PatchStep {
       console.debug(`Applying '${this.title}' to '${this.path}'`);
       const code = await readFile(this.path, 'utf8') //
         .then((code) => this.transform(code));
-      await writeFile(this.path, code);
+      await writeFileAtomic(this.path, code);
     },
   };
 }

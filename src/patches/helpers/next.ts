@@ -1,5 +1,6 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
+import { writeFileAtomic } from './fs.js';
 
 /**
  * Resolve the path to the next-ws installation directory.
@@ -53,5 +54,5 @@ export async function readTrace() {
  */
 export async function writeTrace(trace: Trace) {
   const id = join(resolveNextDirectory(), '.next-ws-trace.json');
-  await writeFile(id, JSON.stringify(trace, null, 2));
+  await writeFileAtomic(id, JSON.stringify(trace, null, 2));
 }
