@@ -28,9 +28,12 @@ test.describe('WebSocket Proxy', () => {
 // held back, so messages are sent while the upstream is still connecting
 test.describe('WebSocket Proxy forwarding', () => {
   const servers: WebSocketServer[] = [];
+  const heldHandshakes: (() => void)[] = [];
   const previousUpstream = process.env.UPSTREAM_URL;
 
   test.afterEach(async () => {
+    // A held handshake keeps its connection open, which stops the server closing
+    for (const reject of heldHandshakes.splice(0)) reject();
     for (const server of servers.splice(0)) {
       for (const client of server.clients) client.terminate();
       await new Promise((resolve) => server.close(resolve));
@@ -52,7 +55,11 @@ test.describe('WebSocket Proxy forwarding', () => {
     const upstream = await listen({
       verifyClient: (info, callback) => {
         upstreamPaths.push(info.req.url ?? '');
-        setTimeout(() => callback(true), handshakeDelay);
+        const timer = setTimeout(() => callback(true), handshakeDelay);
+        heldHandshakes.push(() => {
+          clearTimeout(timer);
+          callback(false);
+        });
       },
     });
     upstream.server.on('connection', (socket) =>

@@ -26,12 +26,11 @@ export function UPGRADE(
 
   // The client is connected before the upstream is, so hold its messages until
   // then, up to a limit so a stalled upstream can't use up the server's memory
-  const MAX_PENDING_BYTES = 1024 * 1024;
   const pending: [import('ws').RawData, boolean][] = [];
   let pendingBytes = 0;
   client.on('message', (data, isBinary) => {
     if (upstream.readyState === WebSocket.OPEN)
-      return upstream.send(data, { binary: isBinary });
+      return forward(client, upstream, data, isBinary);
 
     pendingBytes += byteLength(data);
     if (pendingBytes > MAX_PENDING_BYTES) {
@@ -49,7 +48,7 @@ export function UPGRADE(
 
   upstream.on('message', (data, isBinary) => {
     if (client.readyState === WebSocket.OPEN)
-      client.send(data, { binary: isBinary });
+      forward(upstream, client, data, isBinary);
   });
 
   // Close each side when the other closes, codes like 1005 and 1006 can't be
@@ -70,7 +69,26 @@ export function UPGRADE(
     else if (canSend(code)) upstream.close(code, reason);
     else upstream.close();
   });
-  upstream.once('error', () => client.close(1011, 'Upstream error'));
+  upstream.on('error', () => client.close(1011, 'Upstream error'));
+  // Without a listener a bad frame from the client would crash the server
+  client.on('error', () => upstream.terminate());
+}
+
+const MAX_PENDING_BYTES = 1024 * 1024;
+const MAX_BUFFERED_BYTES = 1024 * 1024;
+
+// Stop reading from one side while the other has too much waiting to be
+// written, so a slow reader can't fill the server's memory
+function forward(
+  from: import('ws').WebSocket,
+  to: import('ws').WebSocket,
+  data: import('ws').RawData,
+  isBinary: boolean,
+) {
+  to.send(data, { binary: isBinary }, () => {
+    if (from.isPaused && to.bufferedAmount < MAX_BUFFERED_BYTES) from.resume();
+  });
+  if (to.bufferedAmount >= MAX_BUFFERED_BYTES) from.pause();
 }
 
 function byteLength(data: import('ws').RawData) {
