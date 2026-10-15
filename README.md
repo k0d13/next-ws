@@ -97,3 +97,7 @@ You can now connect to your WebSocket server, send it a message and receive the 
 ### Chat Room
 
 See the [chat room example](https://github.com/k0d13/next-ws/tree/main/examples/chat-room).
+
+### WebSocket Proxy
+
+Forward connections to another WebSocket server, using a catch-all route to keep the rest of the path. See the [websocket proxy example](https://github.com/k0d13/next-ws/tree/main/examples/websocket-proxy).

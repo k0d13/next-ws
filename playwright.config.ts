@@ -30,6 +30,13 @@ export default defineConfig({
       port: 3002,
       reuseExistingServer: !process.env.CI,
     },
+    {
+      name: 'websocket-proxy',
+      cwd: 'examples/websocket-proxy',
+      command: 'npm run dev -- --port 3004',
+      port: 3004,
+      reuseExistingServer: !process.env.CI,
+    },
     // Note: redis-adapter tests spawn their own instances
   ],
 });
