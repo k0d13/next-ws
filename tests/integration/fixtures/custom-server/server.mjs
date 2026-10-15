@@ -20,5 +20,12 @@ httpServer.customServer = true;
 setHttpServer(httpServer);
 setWebSocketServer(new WebSocketServer({ noServer: true }));
 
+// The custom server's own WebSocket server, on a path that is not a Next.js route
+const ownServer = new WebSocketServer({ noServer: true });
+httpServer.on('upgrade', (req, socket, head) => {
+  if (req.url === '/own')
+    ownServer.handleUpgrade(req, socket, head, (client) => client.send('own'));
+});
+
 await app.prepare();
 httpServer.listen(port, '127.0.0.1');

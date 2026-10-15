@@ -7,7 +7,7 @@
  // Check that the entry is a valid entry
  checkFields<Diff<{
 -  ${options.type === 'route' ? _http.HTTP_METHODS.map((method)=>`${method}?: Function`).join('\n  ') : 'default: Function'}
-+  ${options.type === 'route' ? [..._http.HTTP_METHODS, "UPGRADE"].map((method)=>`${method}?: Function`).join('\n  ') : 'default: Function'}
++  ${options.type === 'route' ? /*next-ws:begin upgrade-method "_http.HTTP_METHODS"*/[..._http.HTTP_METHODS, 'UPGRADE']/*next-ws:end upgrade-method*/.map((method)=>`${method}?: Function`).join('\n  ') : 'default: Function'}
    config?: {}
    generateStaticParams?: Function
    ${options.type === 'route' ? '' : 'unstable_paramMatching?: {}\n  unstable_generateParamMatching?: Function'}

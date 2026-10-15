@@ -1,0 +1,70 @@
+# next@16.4.1
+===================================================================
+--- a/dist/server/lib/router-server.js
++++ b/dist/server/lib/router-server.js
+@@ -191,9 +191,9 @@
+                         process.send({
+                             nextUpgradeContext: upgradeContext,
+                             telemetryDisabled: process.env.NEXT_TELEMETRY_DISABLED,
+-                            ...promptAssessment.status === 'fulfilled' ? {
++                            ...(promptAssessment.status === 'fulfilled' ? {
+                                 nextUpgradeAssessment: promptAssessment.value
+-                            } : {}
++                            } : {})
+                         });
+                     }
+                 });
+@@ -566,18 +566,18 @@
+                 }
+                 return await invokeRender(parsedUrl, parsedUrl.pathname || '/', handleIndex, {
+                     invokeOutput: matchedOutput.itemPath,
+-                    ...matchedOutput.error ? {
++                    ...(matchedOutput.error ? {
+                         invokeStatus: 500,
+                         invokeError: matchedOutput.error
+-                    } : undefined,
++                    } : undefined),
+                     // fsChecker owns the route match for filesystem requests. Forward
+                     // it so BaseServer does not need the removed matcher manager.
+-                    ...matchedOutput.route ? {
++                    ...(matchedOutput.route ? {
+                         match: {
+                             definition: matchedOutput.route,
+                             params: matchedOutput.params
+                         }
+-                    } : undefined
++                    } : undefined)
+                 });
+             }
+             // We want the original pathname without any basePath or proxy rewrites.
+@@ -678,7 +678,7 @@
+         dev: !!opts.dev,
+         server: opts.server,
+         serverFields: {
+-            ...(development == null ? void 0 : (_development_bundler = development.bundler) == null ? void 0 : _development_bundler.serverFields) || {},
++            ...((development == null ? void 0 : (_development_bundler = development.bundler) == null ? void 0 : _development_bundler.serverFields) || {}),
+             setIsrStatus: development == null ? void 0 : (_development_service = development.service) == null ? void 0 : _development_service.setIsrStatus.bind(development == null ? void 0 : development.service)
+         },
+         experimentalTestProxy: !!config.experimental.testProxy,
+@@ -790,13 +790,19 @@
+             // TODO: allow upgrade requests to pages/app paths?
+             // this was not previously supported
+             if (matchedOutput) {
+-                return socket.end();
++                return (
++                    // socket.end()
++                    (void 0)
++                );
+             }
+             if (finished && parsedUrl.protocol) {
+                 if (!statusCode) {
+                     return await (0, _proxyrequest.proxyRequest)(req, socket, parsedUrl, head);
+                 }
+-                return socket.end();
++                return (
++                    // socket.end()
++                    (void 0)
++                );
+             }
+         // If there's no matched output, we don't handle the request as user's
+         // custom WS server may be listening on the same path.

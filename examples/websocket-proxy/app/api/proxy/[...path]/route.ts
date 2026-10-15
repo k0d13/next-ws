@@ -1,4 +1,3 @@
-import type { RouteContext } from 'next-ws/server';
 import type { NextRequest } from 'next/server';
 import { WebSocket, type RawData, type WebSocketServer } from 'ws';
 
@@ -9,7 +8,7 @@ export function GET() {
   });
 }
 
-export function UPGRADE(
+export async function UPGRADE(
   client: WebSocket,
   _server: WebSocketServer,
   request: NextRequest,
@@ -22,7 +21,7 @@ export function UPGRADE(
     process.env.UPSTREAM_URL ?? `ws://localhost:${process.env.PORT ?? 3000}/api/upstream`;
   // Params are decoded, so encode each segment again or a `%3F` in the path
   // would become a query string upstream
-  const path = context.params.path.map(encodeURIComponent).join('/');
+  const path = (await context.params).path.map(encodeURIComponent).join('/');
   const upstream = new WebSocket(`${origin}/${path}${request.nextUrl.search}`, {
     handshakeTimeout: 10_000,
   });

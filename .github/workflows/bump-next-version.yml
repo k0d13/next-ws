@@ -71,33 +71,27 @@ jobs:
           sed -i "s/next: .*/next: \"$next_version\"/" "pnpm-workspace.yaml"
           pnpm install --lockfile-only
 
-      - name: Bump supported range
+      # The supported range is open ended, so only the version tested against moves
+      - name: Bump tested version
         run: |
           next_version="${{ needs.check-next-version.outputs.next_version }}"
           patch_file=$(ls src/patches/patch-*.ts | sort -V | tail -n 1)
           echo "Updating $patch_file to $next_version"
-          sed -i "s/\(versions: .*\) <=[0-9\.]\+/\1 <=$next_version/" "$patch_file"
+          sed -i "s/tested: '[^']*'/tested: '$next_version'/" "$patch_file"
 
-      # The `max` snapshots follow the newest supported version, so the pull request
+      # The `max` snapshots follow the tested version, so the pull request
       # shows a diff of whatever Next.js changed in the files next-ws patches
       - name: Update patch snapshots
         run: pnpm exec vitest run --project patches --update
         # Still open the pull request if a patch no longer applies, so its CI shows why
         continue-on-error: true
 
-      - name: Add new changeset
-        run: |
-          unique_id=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 13; echo)
-          echo "Adding new changeset with ID $unique_id"
-          echo -e "---\n\"next-ws\": patch\n---\n" >> .changeset/$unique_id.md
-          echo "Bump patch supported range to ${{ needs.check-next-version.outputs.next_version }}" >> .changeset/$unique_id.md
-
       - name: Make pull request
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GH_PULL_REQUEST_TOKEN }}
-          commit-message: 'Bump patch supported range to ${{ needs.check-next-version.outputs.next_version }}'
+          commit-message: 'Test against Next.js ${{ needs.check-next-version.outputs.next_version }}'
           branch: 'chore/bump-nextjs-${{ needs.check-next-version.outputs.next_version }}'
-          title: 'Bump patch supported range to ${{ needs.check-next-version.outputs.next_version }}'
-          body: 'Bump patch supported range to ${{ needs.check-next-version.outputs.next_version }}'
+          title: 'Test against Next.js ${{ needs.check-next-version.outputs.next_version }}'
+          body: 'Test against Next.js ${{ needs.check-next-version.outputs.next_version }}. Users on this version are already supported, so this needs no release unless a patch had to change.'
           delete-branch: true

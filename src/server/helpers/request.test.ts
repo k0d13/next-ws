@@ -63,11 +63,11 @@ describe('toNextRequest', () => {
     expect(request.referrer).toBe('http://localhost:3000/chat');
   });
 
-  it('aborts the request signal when the message is aborted', () => {
+  it('aborts the request signal when the connection closes', () => {
     const message = createMessage({});
     const request = toNextRequest(message);
     expect(request.signal.aborted).toBe(false);
-    message.emit('aborted');
+    message.socket.emit('close');
     expect(request.signal.aborted).toBe(true);
   });
 

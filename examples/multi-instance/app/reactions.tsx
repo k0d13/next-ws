@@ -34,7 +34,7 @@ export function Reactions() {
   function react(emoji: Emoji) {
     const reaction: Reaction = { type: 'reaction', emoji };
     send(JSON.stringify(reaction));
-    // The adapter does not send our own message back, so show it straight away
+    // The server leaves the sender out of the broadcast, so show it straight away
     show(emoji);
   }
 

@@ -13,7 +13,7 @@ vi.mock('~/patches/helpers/next.js', () => ({
 
 const execute = vi.hoisted(() => vi.fn(async () => {}));
 vi.mock('~/patches/index.js', () => ({
-  default: [{ name: 'patch', versions: '>=15.0.0 <=16.4.1', steps: [], execute }],
+  default: [{ name: 'patch', versions: '>=15.0.0 <17.0.0', tested: '16.4.1', steps: [], execute }],
 }));
 
 const console = vi.hoisted(() => ({
@@ -45,7 +45,7 @@ describe('patch', () => {
     await patchCommand.action({ yes: false });
     expect(execute).toHaveBeenCalledOnce();
     expect(next.trace).toEqual({
-      patch: '>=15.0.0 <=16.4.1',
+      patch: '>=15.0.0 <17.0.0',
       version: '16.0.0',
       nextWs: nextWsVersion,
     });
@@ -58,6 +58,16 @@ describe('patch', () => {
       'Next.js v14.2.0 is not supported, a minimum of v15.0.0 is required',
     );
     expect(execute).not.toHaveBeenCalled();
+  });
+
+  it('warns without asking for a version newer than the tested one', async () => {
+    next.version = '16.9.0';
+    await patchCommand.action({ yes: false });
+    expect(console.confirm).not.toHaveBeenCalled();
+    expect(console.warn).toHaveBeenCalledWith(
+      'Next.js v16.9.0 is newer than v16.4.1, the last version tested',
+    );
+    expect(execute).toHaveBeenCalledOnce();
   });
 
   it('asks before patching a newer version', async () => {
@@ -85,7 +95,7 @@ describe('patch', () => {
 // ===== Verify ===== //
 
 describe('verify', () => {
-  const current = () => ({ patch: '>=15.0.0 <=16.4.1', version: '16.0.0', nextWs: nextWsVersion });
+  const current = () => ({ patch: '>=15.0.0 <17.0.0', version: '16.0.0', nextWs: nextWsVersion });
 
   it('passes when the trace matches', async () => {
     next.trace = current();
@@ -107,7 +117,7 @@ describe('verify', () => {
     ],
     [
       'the trace predates next-ws versions',
-      { patch: '>=15.0.0 <=16.4.1', version: '16.0.0' },
+      { patch: '>=15.0.0 <17.0.0', version: '16.0.0' },
       'Next.js has been patched by a different version of next-ws',
     ],
   ])('fails when %s', async (_, trace, problem) => {

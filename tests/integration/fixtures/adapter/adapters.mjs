@@ -1,18 +1,11 @@
-import { AsyncLocalStorage } from 'node:async_hooks';
-import { createServer } from 'node:http';
-
-globalThis.AsyncLocalStorage ??= AsyncLocalStorage;
-
-const { default: next } = await import('next');
-const { setAdapter, setHttpServer, setWebSocketServer } = await import('next-ws/server');
-const { WebSocket, WebSocketServer } = await import('ws');
+import { WebSocket } from 'ws';
 
 /**
  * Adapter backed by Redis pub/sub.
  *
  * @implements {import('next-ws/server').Adapter}
  */
-class RedisAdapter {
+export class RedisAdapter {
   handlers = new Map();
 
   async connect() {
@@ -47,7 +40,7 @@ class RedisAdapter {
  *
  * @implements {import('next-ws/server').Adapter}
  */
-class BrokerAdapter {
+export class BrokerAdapter {
   handlers = new Map();
 
   async connect() {
@@ -80,18 +73,3 @@ class BrokerAdapter {
     this.socket.close();
   }
 }
-
-const adapter = process.env.REDIS_URL ? new RedisAdapter() : new BrokerAdapter();
-await adapter.connect();
-
-const port = Number(process.env.PORT);
-const app = next({ dev: process.env.NODE_ENV !== 'production', hostname: '127.0.0.1', port });
-const handle = app.getRequestHandler();
-
-const httpServer = createServer((req, res) => handle(req, res));
-setHttpServer(httpServer);
-setWebSocketServer(new WebSocketServer({ noServer: true }));
-setAdapter(adapter);
-
-await app.prepare();
-httpServer.listen(port, '127.0.0.1');

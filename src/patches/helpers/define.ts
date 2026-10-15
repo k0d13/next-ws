@@ -6,8 +6,10 @@ import { resolveNextDirectory } from './next.js';
 
 export interface PatchDefinition {
   name: string;
-  // Due to the auto update github action, the typing of this needs to be strict
-  versions: `>=${string}.${string}.${string} <=${string}.${string}.${string}`;
+  /** Next.js versions the patch applies to. */
+  versions: `>=${string}.${string}.${string} <${string}.${string}.${string}`;
+  /** Newest Next.js version the patch has been tested against, the daily bump workflow updates it. */
+  tested: `${string}.${string}.${string}`;
   steps: PatchStep[];
 }
 
@@ -25,7 +27,15 @@ export function definePatch(definition: PatchDefinition): Patch {
   return {
     ...definition,
     async execute() {
-      for (const step of this.steps) await console.task(step.execute(), step.title);
+      // Transform every file before writing any, so a step that fails leaves Next.js untouched
+      const files = new Map<string, string>();
+      for (const step of this.steps) {
+        const path = step.path;
+        const code = files.get(path) ?? (await readFile(path, 'utf8'));
+        console.debug(`Applying '${step.title}' to '${path}'`);
+        files.set(path, await console.task(step.transform(code), step.title));
+      }
+      for (const [path, code] of files) await writeFileAtomic(path, code);
     },
   };
 }
@@ -33,12 +43,14 @@ export function definePatch(definition: PatchDefinition): Patch {
 export interface PatchStepDefinition {
   title: string;
   path: `next:${string}` | (string & {});
+  /**
+   * Apply the step to a file. It must throw when it cannot find what it changes, and give the same
+   * output when run again on its own output.
+   */
   transform(code: string): Promise<string>;
 }
 
-export interface PatchStep extends PatchStepDefinition {
-  execute(): Promise<void>;
-}
+export type PatchStep = PatchStepDefinition;
 
 /**
  * Define a step for a patch.
@@ -51,12 +63,6 @@ export function definePatchStep(definition: PatchStepDefinition): PatchStep {
     ...definition,
     get path() {
       return resolvePath(definition.path);
-    },
-    async execute() {
-      console.debug(`Applying '${this.title}' to '${this.path}'`);
-      const code = await readFile(this.path, 'utf8') //
-        .then((code) => this.transform(code));
-      await writeFileAtomic(this.path, code);
     },
   };
 }

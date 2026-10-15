@@ -65,28 +65,24 @@
     "test:integration": "vitest run --project integration",
     "test:unit": "vitest run --project unit --project patches"
   },
-  "dependencies": {
-    "jscodeshift": "^17.3.0",
-    "minimist": "^1.2.8",
-    "semver": "^7.7.4"
-  },
   "devDependencies": {
     "@changesets/changelog-git": "^0.2.1",
     "@changesets/cli": "^2.31.1",
     "@favware/npm-deprecate": "^2.0.0",
-    "@types/jscodeshift": "^17.3.0",
-    "@types/minimist": "^1.2.5",
     "@types/node": "^24.19.2",
     "@types/semver": "^7.7.1",
     "@types/ws": "^8.18.1",
     "@vitest/coverage-v8": "^4.1.11",
+    "acorn": "^8.19.0",
     "chalk": "^5.6.2",
     "diff": "^9.0.0",
     "knip": "^6.41.0",
     "lefthook": "^2.2.2",
+    "magic-string": "^1.4.3",
     "next": "catalog:",
     "oxfmt": "^0.73.0",
     "oxlint": "^1.88.0",
+    "semver": "^7.8.5",
     "tar": "^7.5.22",
     "tsdown": "^0.22.14",
     "typescript": "^6.0.3",
@@ -98,7 +94,7 @@
     "ws": ">=8.0.0"
   },
   "engines": {
-    "node": ">=18.18.0"
+    "node": ">=20.9.0"
   },
   "packageManager": "pnpm@11.28.6"
 }

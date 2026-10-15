@@ -22,7 +22,6 @@ describe.each(modes)(`adapter with ${backend} (%s)`, (mode) => {
       startFixture({
         fixture: 'adapter',
         mode,
-        script: 'server.mjs',
         distDir: mode === 'dev' ? `.next-dev-${id}` : '.next-prod',
         env: { INSTANCE_ID: id, ...env },
       });

@@ -7,7 +7,7 @@ export interface Hello {
   instance: string;
 }
 
-/** Sent by a browser, then relayed to everyone else through the adapter. */
+/** Sent by a browser, then broadcast to everyone else in the room through the adapter. */
 export interface Reaction {
   type: 'reaction';
   emoji: Emoji;

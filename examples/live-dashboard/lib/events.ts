@@ -25,3 +25,6 @@ export type DashboardEvent =
 
 /** How many samples the server keeps, and the dashboard charts. */
 export const HISTORY_LENGTH = 60;
+
+/** Room every dashboard viewer joins, so announcements can be broadcast to all of them. */
+export const DASHBOARD_ROOM = 'dashboard';

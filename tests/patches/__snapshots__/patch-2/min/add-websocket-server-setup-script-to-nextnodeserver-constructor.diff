@@ -2,70 +2,21 @@
 ===================================================================
 --- a/dist/server/next-server.js
 +++ b/dist/server/next-server.js
-@@ -379,8 +379,8 @@
-      * Using this from process.env allows targeting SSR by calling
-      * `process.env.__NEXT_OPTIMIZE_CSS`.
-      */ if (this.renderOpts.optimizeCss) {
--            process.env.__NEXT_OPTIMIZE_CSS = JSON.stringify(true);
--        }
-+                process.env.__NEXT_OPTIMIZE_CSS = JSON.stringify(true);
-+            }
-         if (this.renderOpts.nextScriptWorkers) {
-             process.env.__NEXT_SCRIPT_WORKERS = JSON.stringify(true);
-         }
-@@ -438,6 +438,16 @@
+@@ -438,7 +438,16 @@
                  console.error('Failed to prepare server', err);
              });
          }
-+
-+        {
-+            // @patch attach-websocket-server
-+            let nextWs;
-+            try { nextWs ??= require('next-ws/server') } catch {}
-+            try { nextWs ??= require(require.resolve('next-ws/server', { paths: [process.cwd()] }) )} catch {}
-+            try { nextWs ??= require("/path/to/node_modules/next-ws/dist/server/index.cjs") } catch {}
-+            const adapter = nextWs?.getAdapter?.();
-+            nextWs?.setupWebSocketServer(this, adapter ? { adapter } : undefined);
-+        }
-     }
+-    }
++    /*next-ws:begin setup ""*/
++{
++  let nextWs;
++  try { nextWs = require('next-ws/server'); } catch {}
++  try { nextWs ??= require(require.resolve('next-ws/server', { paths: [process.cwd()] })); } catch {}
++  try { nextWs ??= require("/path/to/node_modules/next-ws/dist/server/index.cjs"); } catch {}
++  if (nextWs) nextWs.setupWebSocketServer(this);
++  else console.error('[next-ws] could not load next-ws/server, WebSocket routes will not work');
++}
++/*next-ws:end setup*/}
      async unstable_preloadEntries() {
          const appPathsManifest = this.getAppPathsManifest();
-@@ -740,14 +750,14 @@
-                 return {
-                     components,
-                     query: {
--                        ...!this.renderOpts.isExperimentalCompile && components.getStaticProps ? {
-+                        ...(!this.renderOpts.isExperimentalCompile && components.getStaticProps ? {
-                             amp: query.amp,
-                             __nextDataReq: query.__nextDataReq,
-                             __nextLocale: query.__nextLocale,
-                             __nextDefaultLocale: query.__nextDefaultLocale
--                        } : query,
-+                        } : query),
-                         // For appDir params is excluded.
--                        ...(isAppPath ? {} : params) || {}
-+                        ...((isAppPath ? {} : params) || {})
-                     }
-                 };
-             } catch (err) {
-@@ -976,7 +986,7 @@
-                 finished: false
-             };
-         }
--        if (!await this.hasMiddleware(middleware.page)) {
-+        if (!(await this.hasMiddleware(middleware.page))) {
-             return {
-                 finished: false
-             };
-@@ -1148,9 +1158,9 @@
-                 url,
-                 page: {
-                     name: params.page,
--                    ...params.params && {
-+                    ...(params.params && {
-                         params: params.params
--                    }
-+                    })
-                 },
-                 body: (0, _requestmeta.getRequestMeta)(params.req, 'clonableBody'),
-                 signal: (0, _nextrequest.signalFromNodeResponse)(params.res.originalResponse),
+         const pagesManifest = this.getPagesManifest();

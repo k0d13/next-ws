@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { relative as relativePath } from 'node:path';
 import { Script } from 'node:vm';
-import { createTwoFilesPatch } from 'diff';
+import { applyPatch, createTwoFilesPatch } from 'diff';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import * as semver from '~/commands/helpers/semver.js';
 import type { Patch } from '~/patches/helpers/define.js';
@@ -22,8 +22,9 @@ vi.mock('~/patches/helpers/next.js', () => ({
 const { default: patches } = await import('~/patches/index.js');
 
 /**
- * Versions every patch is checked against. The bounds of each patch's range are always included, so
- * when the daily bump raises the upper bound the `max` snapshots show what changed in Next.js.
+ * Versions every patch is checked against. The lowest version and the newest tested one are always
+ * included, so when the daily bump raises `tested` the `max` snapshots show what changed in
+ * Next.js.
  */
 const extraVersions: Record<string, string[]> = {
   'patch-2': ['15.5.28'],
@@ -31,7 +32,7 @@ const extraVersions: Record<string, string[]> = {
 
 const targets = patches.flatMap((patch) => [
   { patch, label: 'min', version: semver.minVersion(patch.versions)!.version },
-  { patch, label: 'max', version: semver.maxVersion(patch.versions)!.version },
+  { patch, label: 'max', version: patch.tested },
   ...(extraVersions[patch.name] ?? []).map((version) => ({ patch, label: version, version })),
 ]);
 
@@ -54,10 +55,13 @@ function slug(title: string) {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 }
 
+/** Version the next-ws 2 fixtures were patched from. */
+const legacyVersion = '16.4.1';
+
 // Download every version up front, in parallel
 const directories = new Map<string, Promise<string>>();
 beforeAll(async () => {
-  for (const { patch, version } of targets) {
+  for (const { patch, version } of [...targets, { patch: patches[0], version: legacyVersion }]) {
     state.nextDirectory = process.cwd();
     const files = getPatchFiles(patch);
     if (!directories.has(version)) directories.set(version, getNextDist(version, files));
@@ -120,6 +124,13 @@ describe.each(targets)('$patch.name on next@$version ($label)', ({ patch, label,
     }
   });
 
+  it.each(patch.steps.map((s) => [s.title, s] as const))(
+    'fails when it cannot find what it changes: %s',
+    async (_, step) => {
+      await expect(step.transform('function unrelated() {}')).rejects.toThrow(/Could not find/);
+    },
+  );
+
   it('is idempotent', async () => {
     const again = new Map(patched);
     for (const step of patch.steps) {
@@ -139,6 +150,35 @@ describe.each(targets)('$patch.name on next@$version ($label)', ({ patch, label,
       await expect(`# next@${version}\n${diff}`).toMatchFileSnapshot(
         `__snapshots__/${patch.name}/${label}/${slug(title)}.diff`,
       );
+    },
+  );
+});
+
+describe(`upgrading next@${legacyVersion} patched by next-ws 2`, () => {
+  const steps = patches.at(-1)!.steps;
+
+  beforeAll(async () => {
+    state.nextDirectory = await directories.get(legacyVersion)!;
+  });
+
+  it.each(steps.map((s) => [s.title, s] as const))(
+    'replaces the old patch: %s',
+    async (title, step) => {
+      const original = await readFile(step.path, 'utf8');
+      const fixture = await readFile(
+        `${import.meta.dirname}/__fixtures__/next-ws-2/${slug(title)}.diff`,
+        'utf8',
+      );
+      const legacy = applyPatch(original, fixture.replace(/^# .*\n/, ''));
+      if (legacy === false) throw new Error(`Could not apply the fixture for ${title}`);
+
+      const upgraded = await step.transform(legacy);
+      const fresh = await step.transform(original);
+      expect(upgraded).not.toMatch(/@patch |\/\/ socket\.end\(\)/);
+      // The old patch is gone rather than patched again
+      for (const marker of [/\/\*next-ws:begin /g, /'UPGRADE'/g, /setupWebSocketServer/g])
+        expect(upgraded.match(marker)?.length, String(marker)).toBe(fresh.match(marker)?.length);
+      expect(compiles(upgraded)).toBe(true);
     },
   );
 });

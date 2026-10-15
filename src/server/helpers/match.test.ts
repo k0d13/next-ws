@@ -161,6 +161,48 @@ describe('findMatchingRoute', () => {
       const b = createServer(['/rooms/lobby', '/rooms/[room]']);
       expect(findMatchingRoute(a, '/rooms/lobby')).toEqual(findMatchingRoute(b, '/rooms/lobby'));
     });
+
+    it('prefers the route whose earlier segment is static', () => {
+      const server = createServer(['/[a]/b', '/a/[b]']);
+      expect(findMatchingRoute(server, '/a/b')?.filename).toBe('app/a/[b]/route');
+    });
+
+    it('prefers an exact route over an optional catch-all', () => {
+      const server = createServer(['/docs/[[...slug]]', '/docs']);
+      expect(findMatchingRoute(server, '/docs')?.filename).toBe('app/docs/route');
+    });
+  });
+
+  it('extracts parameters whose names are not identifiers', () => {
+    const server = createServer(['/posts/[post-id]/[...rest-of]']);
+    expect(findMatchingRoute(server, '/posts/1/a/b')?.params).toEqual({
+      'post-id': '1',
+      'rest-of': ['a', 'b'],
+    });
+  });
+
+  it('reuses the routes of a production server', () => {
+    let reads = 0;
+    const server = {
+      serverOptions: { conf: {} },
+      appPathRoutes: {},
+      getAppPathRoutes: () => (reads++, { '/a': ['app/a/route'] }),
+    } as unknown as NextNodeServer;
+    findMatchingRoute(server, '/a');
+    findMatchingRoute(server, '/a');
+    expect(reads).toBe(1);
+  });
+
+  it('reads the routes again in development, as they are compiled', () => {
+    let reads = 0;
+    const server = {
+      serverOptions: { conf: {}, dev: true },
+      appPathRoutes: {},
+      getAppPathRoutes: () => (reads++, { '/a': ['app/a/route'] }),
+    } as unknown as NextNodeServer;
+    findMatchingRoute(server, '/a');
+    findMatchingRoute(server, '/a');
+    expect(reads).toBe(2);
   });
 
   // ===== Root ===== //
@@ -168,5 +210,11 @@ describe('findMatchingRoute', () => {
   it('matches a root route', () => {
     const server = createServer(['/']);
     expect(findMatchingRoute(server, '/')?.filename).toBe('app/route');
+  });
+
+  it('matches a root route at the base path', () => {
+    const server = createServer(['/'], { basePath: '/app' });
+    expect(findMatchingRoute(server, '/app')?.filename).toBe('app/route');
+    expect(findMatchingRoute(server, '/application')).toBeUndefined();
   });
 });

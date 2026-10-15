@@ -1,11 +1,15 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import * as persistent from './persistent.js';
+
+const logger = vi.hoisted(() => ({ warn: vi.fn() }));
+vi.mock('next/dist/build/output/log.js', () => logger);
 
 const keys = [
   'next-ws.http-server',
   'next-ws.websocket-server',
   'next-ws.request-store',
   'next-ws.adapter',
+  'next-ws.rooms',
 ];
 afterEach(() => {
   for (const key of keys) Reflect.deleteProperty(globalThis, Symbol.for(key));
@@ -15,7 +19,6 @@ describe.each([
   ['HttpServer', 'next-ws.http-server'],
   ['WebSocketServer', 'next-ws.websocket-server'],
   ['RequestStorage', 'next-ws.request-store'],
-  ['Adapter', 'next-ws.adapter'],
 ] as const)('%s', (name, key) => {
   const get = persistent[`get${name}`] as () => unknown;
   const set = persistent[`set${name}`] as (value: unknown) => boolean;
@@ -50,5 +53,20 @@ describe.each([
     const value = {};
     set(value);
     expect(use(() => ({}))).toBe(value);
+  });
+});
+
+describe('Adapter', () => {
+  it('returns the adapter that was set', () => {
+    const adapter = { broadcast() {}, subscribe() {}, unsubscribe() {}, close() {} };
+    persistent.setAdapter(adapter);
+    expect(persistent.getAdapter()).toBe(adapter);
+    expect(logger.warn).not.toHaveBeenCalled();
+  });
+
+  it('warns when set after rooms were first used', () => {
+    persistent.useRooms(() => ({}) as never);
+    persistent.setAdapter(undefined);
+    expect(logger.warn).toHaveBeenCalledOnce();
   });
 });
