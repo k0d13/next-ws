@@ -7,8 +7,9 @@ export default function Page() {
   const [messages, setMessages] = useState<string[]>([]);
 
   useEffect(() => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const socket = new WebSocket(
-      `ws://${window.location.host}/api/proxy/custom/path`,
+      `${protocol}//${window.location.host}/api/proxy/custom/path`,
     );
     socket.addEventListener('message', (event) =>
       setMessages((p) => [...p, String(event.data)]),
@@ -30,7 +31,8 @@ export default function Page() {
           event.preventDefault();
           const input = event.currentTarget.elements.namedItem('message');
           if (!(input instanceof HTMLInputElement) || !input.value) return;
-          socket?.send(input.value);
+          if (socket?.readyState !== WebSocket.OPEN) return;
+          socket.send(input.value);
           input.value = '';
         }}
       >
