@@ -8,12 +8,8 @@ export default function Page() {
 
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const socket = new WebSocket(
-      `${protocol}//${window.location.host}/api/proxy/custom/path`,
-    );
-    socket.addEventListener('message', (event) =>
-      setMessages((p) => [...p, String(event.data)]),
-    );
+    const socket = new WebSocket(`${protocol}//${window.location.host}/api/proxy/custom/path`);
+    socket.addEventListener('message', (event) => setMessages((p) => [...p, String(event.data)]));
     setSocket(socket);
     return () => socket.close();
   }, []);

@@ -76,10 +76,7 @@ This example demonstrates a simple WebSocket echo server that sends back any mes
 ```ts
 // app/api/ws/route.ts (can be any route file in the app directory)
 
-export function UPGRADE(
-  client: import('ws').WebSocket,
-  server: import('ws').WebSocketServer
-) {
+export function UPGRADE(client: import('ws').WebSocket, server: import('ws').WebSocketServer) {
   console.log('A client connected');
 
   client.on('message', (message) => {

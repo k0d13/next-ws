@@ -17,6 +17,7 @@ export interface Patch extends PatchDefinition {
 
 /**
  * Define a patch.
+ *
  * @param definition The definition for the patch
  * @returns The patch
  */
@@ -24,8 +25,7 @@ export function definePatch(definition: PatchDefinition): Patch {
   return {
     ...definition,
     async execute() {
-      for (const step of this.steps)
-        await console.task(step.execute(), step.title);
+      for (const step of this.steps) await console.task(step.execute(), step.title);
     },
   };
 }
@@ -42,6 +42,7 @@ export interface PatchStep extends PatchStepDefinition {
 
 /**
  * Define a step for a patch.
+ *
  * @param definition The definition for the step
  * @returns The step
  */
@@ -62,6 +63,7 @@ export function definePatchStep(definition: PatchStepDefinition): PatchStep {
 
 /**
  * Patches allow prepending short-hands to paths, this will resolve them.
+ *
  * @param path The path to resolve
  * @returns The resolved path
  */

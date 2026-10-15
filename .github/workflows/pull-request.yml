@@ -1,0 +1,33 @@
+name: Pull Request
+
+# Everything that happens to a pull request. Releasing lives in `release.yml`, and
+# the shared gate lives in `quality.yml`.
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'mise.toml'
+      - 'src/**'
+      - 'tests/**'
+      - 'examples/**'
+      - '*.config.ts'
+      - 'tsconfig*.json'
+      - 'knip.json'
+      - '.changeset/**'
+      - '.github/actions/**'
+      - '.github/workflows/pull-request.yml'
+      - '.github/workflows/quality.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # A new push makes the old run irrelevant.
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality
+    uses: ./.github/workflows/quality.yml

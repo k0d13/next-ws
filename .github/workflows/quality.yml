@@ -1,0 +1,72 @@
+name: Quality
+
+# The shared gate: build, check and test the package. Nothing triggers this on its
+# own, so every caller decides when it runs and gets the same answer.
+on:
+  workflow_call:
+
+# These jobs run branch code, so the token only needs to read the repository.
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Building
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup toolchain
+        uses: ./.github/actions/toolchain
+
+      - name: Build the package
+        run: pnpm build
+
+  check:
+    name: Checking
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup toolchain
+        uses: ./.github/actions/toolchain
+
+      - name: Types
+        run: pnpm check:types
+
+      - name: Lint
+        run: pnpm check:lint
+
+      - name: Format
+        run: pnpm check:format
+
+      - name: Deps
+        run: pnpm check:deps
+
+  test:
+    name: Testing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup toolchain
+        uses: ./.github/actions/toolchain
+
+      - name: Run tests
+        uses: docker://mcr.microsoft.com/playwright:v1.58.2-jammy
+        with:
+          args: npx playwright test
+
+      - name: Upload test outputs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-outputs
+          path: |
+            tests/.report/
+            tests/.results/
+          include-hidden-files: true
+          retention-days: 7

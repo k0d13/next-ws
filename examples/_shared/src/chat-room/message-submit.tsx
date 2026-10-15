@@ -1,17 +1,11 @@
 'use client';
 
-// biome-ignore lint/style/useImportType: React is used in JSX output
-import * as React from 'react';
-import { useCallback } from 'react';
+import { useCallback, type FormEvent } from 'react';
 import type { Message } from './messaging';
 
-export function MessageSubmit({
-  onMessage,
-}: {
-  onMessage(message: Message): void;
-}) {
+export function MessageSubmit({ onMessage }: { onMessage(message: Message): void }) {
   const handleSubmit = useCallback(
-    (event: React.FormEvent<HTMLFormElement>) => {
+    (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       const form = new FormData(event.currentTarget);
       const author = form.get('author') as string;
@@ -30,18 +24,8 @@ export function MessageSubmit({
 
   return (
     <form onSubmit={handleSubmit} style={{ display: 'flex' }}>
-      <input
-        name="author"
-        style={{ width: '70px' }}
-        type="text"
-        placeholder="Your name"
-      />
-      <input
-        name="content"
-        style={{ width: '280px' }}
-        type="text"
-        placeholder="Your message"
-      />
+      <input name="author" style={{ width: '70px' }} type="text" placeholder="Your name" />
+      <input name="content" style={{ width: '280px' }} type="text" placeholder="Your message" />
       <button type="submit">Send</button>
     </form>
   );

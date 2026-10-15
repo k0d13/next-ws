@@ -1,27 +1,27 @@
-"dependencies":
+'dependencies':
   - changed-files:
-      - any-glob-to-any-file: ["pnpm-lock.yaml"]
+      - any-glob-to-any-file: ['pnpm-lock.yaml']
 
-"client":
+'client':
   - changed-files:
-      - any-glob-to-any-file: ["src/client/**"]
+      - any-glob-to-any-file: ['src/client/**']
 
-"server":
+'server':
   - changed-files:
-      - any-glob-to-any-file: ["src/server/**"]
+      - any-glob-to-any-file: ['src/server/**']
 
-"patches":
+'patches':
   - changed-files:
-      - any-glob-to-any-file: ["src/patches/**"]
+      - any-glob-to-any-file: ['src/patches/**']
 
-"cli":
+'cli':
   - changed-files:
-      - any-glob-to-any-file: ["src/cli.ts", "src/commands/**"]
+      - any-glob-to-any-file: ['src/cli.ts', 'src/commands/**']
 
-"examples":
+'examples':
   - changed-files:
-      - any-glob-to-any-file: ["examples/**"]
+      - any-glob-to-any-file: ['examples/**']
 
-"tests":
+'tests':
   - changed-files:
-      - any-glob-to-any-file: ["tests/**"]
+      - any-glob-to-any-file: ['tests/**']

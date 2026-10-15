@@ -19,8 +19,7 @@ export function useMessaging(url: () => string) {
     socket?.addEventListener(
       'message',
       async (event) => {
-        const payload =
-          typeof event.data === 'string' ? event.data : await event.data.text();
+        const payload = typeof event.data === 'string' ? event.data : await event.data.text();
         const message = JSON.parse(payload) as Message;
         console.log('Incoming message:', message);
         setMessages((p) => [...p, message]);

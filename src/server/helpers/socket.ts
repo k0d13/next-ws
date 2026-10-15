@@ -1,10 +1,11 @@
 /**
  * WebSocket socket handler.
+ *
+ * @deprecated Prefer UPGRADE and {@link UpgradeHandler}
  * @param client WebSocket client instance
  * @param request Node.js HTTP incoming message instance
  * @param server WebSocket server instance
  * @param context Route context
- * @deprecated Prefer UPGRADE and {@link UpgradeHandler}
  */
 export type SocketHandler = (
   client: import('ws').WebSocket,
@@ -15,6 +16,7 @@ export type SocketHandler = (
 
 /**
  * WebSocket upgrade handler.
+ *
  * @param client WebSocket client instance
  * @param server WebSocket server instance
  * @param request Next.js request instance

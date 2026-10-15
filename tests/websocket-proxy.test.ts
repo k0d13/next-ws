@@ -9,9 +9,7 @@ test.use({ baseURL: 'http://localhost:3006' });
 test.describe('WebSocket Proxy', () => {
   test('connects through the proxy to the upstream path', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('li').first()).toHaveText(
-      'Connected to upstream at /custom/path',
-    );
+    await expect(page.locator('li').first()).toHaveText('Connected to upstream at /custom/path');
   });
 
   test('forwards messages both ways', async ({ page }) => {
@@ -41,9 +39,7 @@ test.describe('WebSocket Proxy forwarding', () => {
     process.env.UPSTREAM_URL = previousUpstream;
   });
 
-  async function listen(
-    options: ConstructorParameters<typeof WebSocketServer>[0],
-  ) {
+  async function listen(options: ConstructorParameters<typeof WebSocketServer>[0]) {
     const server = new WebSocketServer({ ...options, port: 0 });
     servers.push(server);
     await new Promise((resolve) => server.once('listening', resolve));
@@ -63,23 +59,16 @@ test.describe('WebSocket Proxy forwarding', () => {
       },
     });
     upstream.server.on('connection', (socket) =>
-      socket.on('message', (data, isBinary) =>
-        socket.send(data, { binary: isBinary }),
-      ),
+      socket.on('message', (data, isBinary) => socket.send(data, { binary: isBinary })),
     );
     process.env.UPSTREAM_URL = `ws://localhost:${upstream.port}`;
 
     const proxy = await listen({});
     proxy.server.on('connection', (client, request) => {
       const url = new URL(request.url ?? '/', 'http://localhost');
-      UPGRADE(
-        client,
-        proxy.server,
-        { nextUrl: url } as unknown as NextRequest,
-        {
-          params: { path: url.pathname.split('/').filter(Boolean) },
-        },
-      );
+      UPGRADE(client, proxy.server, { nextUrl: url } as unknown as NextRequest, {
+        params: { path: url.pathname.split('/').filter(Boolean) },
+      });
     });
 
     return { proxyPort: proxy.port, upstreamPaths };
@@ -104,9 +93,7 @@ test.describe('WebSocket Proxy forwarding', () => {
     client.close();
 
     expect(upstreamPaths).toEqual(['/a/b?x=1']);
-    expect(
-      received.map(([data, isBinary]) => [[...(data as Buffer)], isBinary]),
-    ).toEqual([
+    expect(received.map(([data, isBinary]) => [[...(data as Buffer)], isBinary])).toEqual([
       [[...Buffer.from('queued text')], false],
       [[0, 1, 2, 255], true],
     ]);
@@ -116,9 +103,7 @@ test.describe('WebSocket Proxy forwarding', () => {
     const { proxyPort } = await startProxy(60_000);
     const client = new WebSocket(`ws://localhost:${proxyPort}/stalled`);
 
-    const closed = new Promise<number>((resolve) =>
-      client.once('close', (code) => resolve(code)),
-    );
+    const closed = new Promise<number>((resolve) => client.once('close', (code) => resolve(code)));
     client.once('open', () => client.send(Buffer.alloc(2 * 1024 * 1024)));
 
     expect(await closed).toBe(1009);

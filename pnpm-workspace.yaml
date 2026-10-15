@@ -1,10 +1,34 @@
 packages:
-  - "."
-  - "examples/*"
+  - '.'
+  - 'examples/*'
 
 catalog:
-  next: "16.4.2"
-  react: "19.1.1"
-  react-dom: "19.1.1"
-  "@types/react": "19.1.10"
-  ioredis: "5.8.1"
+  next: '16.4.2'
+  react: '19.1.1'
+  react-dom: '19.1.1'
+  '@types/react': '19.1.10'
+  ioredis: '5.11.1'
+
+allowBuilds:
+  esbuild: true
+  lefthook: true
+  sharp: true
+
+minimumReleaseAgeExclude:
+  - '@pnpm/exe@11.28.6'
+  - '@pnpm/linux-arm64@11.28.6'
+  - '@pnpm/linux-x64@11.28.6'
+  - '@pnpm/linuxstatic-x64@11.28.6'
+  - '@pnpm/macos-arm64@11.28.6'
+  - '@pnpm/win-arm64@11.28.6'
+  - '@pnpm/win-x64@11.28.6'
+  - '@next/env@16.4.2'
+  - '@next/swc-darwin-arm64@16.4.2'
+  - '@next/swc-darwin-x64@16.4.2'
+  - '@next/swc-linux-arm64-gnu@16.4.2'
+  - '@next/swc-linux-arm64-musl@16.4.2'
+  - '@next/swc-linux-x64-gnu@16.4.2'
+  - '@next/swc-linux-x64-musl@16.4.2'
+  - '@next/swc-win32-arm64-msvc@16.4.2'
+  - '@next/swc-win32-x64-msvc@16.4.2'
+  - next@16.4.2

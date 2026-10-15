@@ -18,12 +18,11 @@ export interface CommandGroup extends CommandGroupDefinition {
 
 /**
  * Define a command group.
+ *
  * @param definition The definition for the command group
  * @returns The command group
  */
-export function defineCommandGroup(
-  definition: CommandGroupDefinition,
-): CommandGroup {
+export function defineCommandGroup(definition: CommandGroupDefinition): CommandGroup {
   return {
     ...definition,
     parse(parents: CommandGroup[], argv: string[]) {
@@ -31,8 +30,7 @@ export function defineCommandGroup(
       for (const child of this.children)
         if (parsed._[0] === child.name)
           return void child.parse(parents.concat(this), argv.slice(1));
-      if (parsed.help)
-        return void console.log(buildCommandGroupHelp(parents, this));
+      if (parsed.help) return void console.log(buildCommandGroupHelp(parents, this));
       if (parsed.v || parsed.version) return void console.log(version);
       return void console.log(buildCommandGroupHelp(parents, this));
     },
@@ -41,6 +39,7 @@ export function defineCommandGroup(
 
 /**
  * Build the help message for a command group.
+ *
  * @param parents List of parent command groups used to build the usage
  * @param group The command group to build the help message for
  * @returns The help message for the command group
@@ -61,12 +60,9 @@ Options:
 
 // ===== Command ===== //
 
-export interface CommandDefinition<TOptions extends OptionDefinition[]>
-  extends Definition {
+export interface CommandDefinition<TOptions extends OptionDefinition[]> extends Definition {
   options: TOptions;
-  action(
-    options: Record<TOptions[number]['name'], unknown>,
-  ): Promise<void> | void;
+  action(options: Record<TOptions[number]['name'], unknown>): Promise<void> | void;
 }
 
 export interface Command<
@@ -77,6 +73,7 @@ export interface Command<
 
 /**
  * Define a command.
+ *
  * @param definition The definition for the command
  * @returns The command
  */
@@ -95,6 +92,7 @@ export function defineCommand<const TOptions extends OptionDefinition[]>(
 
 /**
  * Build the help message for a command.
+ *
  * @param parents List of parent command groups used to build the usage
  * @param command The command to build the help message for
  * @returns The help message for the command

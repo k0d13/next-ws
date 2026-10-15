@@ -1,5 +1,3 @@
-// biome-ignore lint/correctness/noUnusedImports: React is used in JSX output
-import * as React from 'react';
 import type { Message } from './messaging';
 
 export function MessageList({ messages }: { messages: Message[] }) {

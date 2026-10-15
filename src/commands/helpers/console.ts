@@ -30,6 +30,7 @@ export function failure(...message: unknown[]) {
 
 /**
  * Show a confirmation prompt where the user can choose to confirm or deny.
+ *
  * @param message The message to show
  * @returns A promise that resolves to a boolean indicating whether the user confirmed or denied
  */
@@ -54,6 +55,7 @@ export async function confirm(...message: unknown[]) {
 
 /**
  * Show a loading spinner while a promise is running.
+ *
  * @param promise The promise to run
  * @param message The message to show
  * @returns The result of the promise
@@ -66,8 +68,7 @@ export async function task<T>(promise: Promise<T>, ...message: unknown[]) {
   let spinnerIndex = 0;
   const spinnerInterval = setInterval(() => {
     readline.cursorTo(process.stdout, 0);
-    const spinnerChar =
-      spinnerChars[spinnerIndex++ % spinnerChars.length] ?? ' ';
+    const spinnerChar = spinnerChars[spinnerIndex++ % spinnerChars.length] ?? ' ';
     process.stdout.write(chalk.cyan('[next-ws]', spinnerChar, ...message));
   }, 100);
 

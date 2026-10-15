@@ -3,9 +3,9 @@
   "private": true,
   "scripts": {
     "build": "next build",
-    "start": "NODE_ENV=production tsx --require=\"./global.js\" server.ts",
     "dev": "tsx --require=\"./global.js\" server.ts",
-    "prepare": "next-ws patch"
+    "prepare": "next-ws patch",
+    "start": "NODE_ENV=production tsx --require=\"./global.js\" server.ts"
   },
   "dependencies": {
     "next": "catalog:",

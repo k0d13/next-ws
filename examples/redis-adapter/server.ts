@@ -2,12 +2,7 @@ import { Server } from 'node:http';
 import { parse } from 'node:url';
 import Redis from 'ioredis';
 import next from 'next';
-import {
-  type Adapter,
-  setAdapter,
-  setHttpServer,
-  setWebSocketServer,
-} from 'next-ws/server';
+import { type Adapter, setAdapter, setHttpServer, setWebSocketServer } from 'next-ws/server';
 import { WebSocketServer } from 'ws';
 
 class RedisAdapter implements Adapter {
@@ -33,10 +28,7 @@ class RedisAdapter implements Adapter {
     await this.pub.publish(room, messageStr);
   }
 
-  async onMessage(
-    room: string,
-    handler: (message: unknown) => void,
-  ): Promise<void> {
+  async onMessage(room: string, handler: (message: unknown) => void): Promise<void> {
     if (!this.handlers.has(room)) {
       this.handlers.set(room, new Set());
       await this.sub.subscribe(room);
