@@ -25,6 +25,7 @@
 - [📦 Installation](#-installation)
 - [🚀 Usage](#-usage)
 - [🌀 Examples](#-examples)
+- [🔒 HTTPS and `wss://`](#-https-and-wss)
 
 ## 📦 Installation
 
@@ -101,3 +102,23 @@ See the [chat room example](https://github.com/k0d13/next-ws/tree/main/examples/
 ### WebSocket Proxy
 
 Forward connections to another WebSocket server, using a catch-all route to keep the rest of the path. See the [websocket proxy example](https://github.com/k0d13/next-ws/tree/main/examples/websocket-proxy).
+
+## 🔒 HTTPS and `wss://`
+
+Next WS doesn't handle TLS itself. It listens for upgrade requests on the same HTTP server that Next.js uses, so `wss://` works whenever that server is reachable over HTTPS.
+
+**Reverse proxy (recommended):** terminate TLS in nginx, Caddy or your load balancer and forward to `next start` over plain HTTP. Make sure the proxy forwards the `Upgrade` and `Connection` headers.
+
+**Custom server:** create an HTTPS server with your certificate and hand it to Next WS. See the [custom server example](https://github.com/k0d13/next-ws/tree/main/examples/custom-server) for the full setup.
+
+```ts
+import { readFileSync } from 'node:fs';
+import { createServer } from 'node:https';
+import { setHttpServer } from 'next-ws/server';
+
+const httpsServer = createServer({
+  key: readFileSync('key.pem'),
+  cert: readFileSync('cert.pem'),
+});
+setHttpServer(httpsServer);
+```

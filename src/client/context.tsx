@@ -1,7 +1,7 @@
 'use client';
 
 // biome-ignore lint/style/useImportType: Actually need the value for JSX
-import React, { createContext, useContext, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
 export const WebSocketContext = createContext<WebSocket | null>(null);
 WebSocketContext.displayName = 'WebSocketContext';
@@ -24,27 +24,30 @@ export function WebSocketProvider(
     binaryType?: BinaryType;
   }>,
 ) {
-  const clientRef = useRef<WebSocket | null>(null);
+  const [client, setClient] = useState<WebSocket | null>(null);
+
+  // Compare protocols by value so an inline array doesn't reconnect every render,
+  // subprotocol tokens cannot contain commas so joining is lossless
+  const protocols = Array.isArray(p.protocols)
+    ? p.protocols.join(',')
+    : p.protocols;
+
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    if (clientRef.current) {
-      clientRef.current.close();
-      clientRef.current = null;
-    }
-
-    const client = new WebSocket(p.url, p.protocols);
+    const client = new WebSocket(
+      p.url,
+      protocols ? protocols.split(',') : undefined,
+    );
     if (p.binaryType) client.binaryType = p.binaryType;
-    clientRef.current = client;
+    setClient(client);
 
     return () => {
       client.close();
-      clientRef.current = null;
+      setClient(null);
     };
-  }, [p.url, p.protocols, p.binaryType]);
+  }, [p.url, protocols, p.binaryType]);
 
   return (
-    <WebSocketContext.Provider value={clientRef.current}>
+    <WebSocketContext.Provider value={client}>
       {p.children}
     </WebSocketContext.Provider>
   );
