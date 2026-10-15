@@ -72,8 +72,21 @@ export function setupWebSocketServer(
       return socket.end();
     }
 
-    const handleUpgrade = module.userland.UPGRADE;
-    const handleSocket = module.userland.SOCKET;
+    let handleUpgrade: typeof module.userland.UPGRADE;
+    let handleSocket: typeof module.userland.SOCKET;
+    try {
+      handleUpgrade = module.userland.UPGRADE;
+      handleSocket = module.userland.SOCKET;
+    } catch (cause) {
+      // Reading `userland` can still throw if `ensureUserland()` in
+      // `importRouteModule` did not fully resolve it. End the socket rather
+      // than leaving the client waiting indefinitely on the upgrade.
+      logger.error(
+        `[next-ws] could not access handlers for page ${pathname}`,
+        cause,
+      );
+      return socket.end();
+    }
     if (
       (!handleUpgrade || typeof handleUpgrade !== 'function') &&
       (!handleSocket || typeof handleSocket !== 'function')

@@ -35,7 +35,10 @@ export async function importRouteModule(
   try {
     // @ts-expect-error - getPageModule is protected
     const buildPagePath = nextServer.getPagePath(filePathname);
-    return (await require(buildPagePath)).routeModule as RouteModule;
+    const routeModule = (await require(buildPagePath))
+      .routeModule as RouteModule;
+    await routeModule?.ensureUserland?.();
+    return routeModule;
   } catch (cause) {
     console.error(cause);
     return undefined;
@@ -51,6 +54,7 @@ export interface RouteModule {
     SOCKET?: SocketHandler;
     UPGRADE?: UpgradeHandler;
   };
+  ensureUserland?: () => Promise<void>;
 }
 
 /**
