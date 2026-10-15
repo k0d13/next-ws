@@ -1,5 +1,12 @@
 # next-ws
 
+## 2.2.19
+
+### Patch Changes
+
+- 8cfb186: Bump patch supported range to 16.4.2
+- 3344756: Fix `WebSocketProvider` not exposing its socket until a re-render, and reconnecting on every render when given an inline `protocols` array
+
 ## 2.2.18
 
 ### Patch Changes
