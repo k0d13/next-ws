@@ -41,7 +41,7 @@ export const patchNextNodeServer = definePatchStep({
         if (existing && idx > -1) body[idx] = block;
         else body.push(block);
       })
-      .toSource();
+      .toSource({ lineTerminator: '\n' });
   },
 });
 
@@ -62,9 +62,12 @@ export const patchRouterServer = definePatchStep({
       .replaceWith((path) => {
         const expr = $.unaryExpression('void', $.literal(0)); // void 0
         expr.comments = [$.commentLine(` ${$(path.node).toSource()}`)];
+        // Recast wraps a commented return argument in parentheses, so print them up front or a
+        // second run would add them and the patch would not be idempotent
+        Reflect.set(expr, 'extra', { parenthesized: true });
         return expr;
       })
-      .toSource();
+      .toSource({ lineTerminator: '\n' });
   },
 });
 
@@ -86,7 +89,7 @@ export const patchNextTypesPlugin = definePatchStep({
           $.literal('SOCKET'),
         ]);
       })
-      .toSource();
+      .toSource({ lineTerminator: '\n' });
   },
 });
 
@@ -118,7 +121,7 @@ export const patchHeaders = definePatchStep({
         if (existing && idx > -1) body[idx] = block;
         else body.unshift(block);
       })
-      .toSource();
+      .toSource({ lineTerminator: '\n' });
   },
 });
 
@@ -150,7 +153,7 @@ export const patchCookies = definePatchStep({
         if (existing && idx > -1) body[idx] = block;
         else body.unshift(block);
       })
-      .toSource();
+      .toSource({ lineTerminator: '\n' });
   },
 });
 
