@@ -1,9 +1,0 @@
-{
-  "extends": "../../tsconfig.base.json",
-  "include": ["app", ".next/types/**/*.ts", ".next/dev/types/**/*.ts"],
-  "compilerOptions": {
-    "incremental": true,
-    "isolatedModules": true,
-    "plugins": [{ "name": "next" }]
-  }
-}

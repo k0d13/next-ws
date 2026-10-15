@@ -26,8 +26,11 @@
 - [🚀 Usage](#-usage)
 - [🌀 Examples](#-examples)
 - [🔒 HTTPS and `wss://`](#-https-and-wss)
+- [🧪 Development](#-development)
 
 ## 📦 Installation
+
+next-ws supports Next.js 15 and later.
 
 To set up a WebSocket server with `next-ws`, you need to patch your local Next.js installation. `next-ws` simplifies this process by providing a CLI command that handles the patching for you. Follow these steps to get started:
 
@@ -51,54 +54,115 @@ To set up a WebSocket server with `next-ws`, you need to patch your local Next.j
 
 ## 🚀 Usage
 
-Using WebSocket connections in your Next.js app directory is simple with `next-ws`. You can handle WebSocket connections directly in your API routes via exported `UPGRADE` functions.
+Handle WebSocket connections in any route file in the app directory by exporting an `UPGRADE` function. It runs once for each new connection.
 
-```js
+```ts
+// app/api/ws/route.ts
+
+import type { RouteContext } from 'next-ws/server';
+import type { NextRequest } from 'next/server';
+import type { WebSocket, WebSocketServer } from 'ws';
+
 export function UPGRADE(
-  client: import('ws').WebSocket,
-  server: import('ws').WebSocketServer,
-  request: import('next/server').NextRequest,
-  context: import('next-ws/server').RouteContext<'/api/ws'>,
+  client: WebSocket,
+  server: WebSocketServer,
+  request: NextRequest,
+  context: RouteContext<'/api/ws'>,
 ) {
+  client.on('message', (message) => client.send(message));
+}
+```
+
+| Argument  | What it is                                                                                  |
+| --------- | ------------------------------------------------------------------------------------------- |
+| `client`  | The connection, a `WebSocket` from [`ws`](https://github.com/websockets/ws).                |
+| `server`  | The `WebSocketServer` every connection belongs to, `server.clients` lists all of them.      |
+| `request` | The upgrade request as a `NextRequest`, with its URL, headers and cookies.                  |
+| `context` | Route parameters in `context.params`, such as `{ room: 'general' }` for `/rooms/[room]/ws`. |
+
+Requests to a path without a matching route, or to a route without `UPGRADE`, are refused with a `404`. If `UPGRADE` throws, the connection is closed with code `1011`.
+
+### Headers and cookies
+
+`headers()` and `cookies()` from `next/headers` work inside `UPGRADE`, and inside any event listener it adds, so authentication works the way it does in a page:
+
+```ts
+import { cookies } from 'next/headers';
+
+export async function UPGRADE(client: WebSocket) {
+  const session = await getSession((await cookies()).get('session')?.value);
+  if (!session) return client.close(1008, 'Unauthorised');
   // ...
 }
 ```
 
-## 🌀 Examples
+### Sending from anywhere on the server
 
-> [!TIP]  
-> For more detailed examples, refer the [`examples` directory](https://github.com/k0d13/next-ws/tree/main/examples).
-
-### Echo Server
-
-This example demonstrates a simple WebSocket echo server that sends back any message it receives. Create a new API route file anywhere in your app directory and export a `UPGRADE` function to handle WebSocket connections:
+Server actions and route handlers run in the same process as the WebSocket server, so they can reach connected clients with `getWebSocketServer()`:
 
 ```ts
-// app/api/ws/route.ts (can be any route file in the app directory)
+'use server';
 
-export function UPGRADE(client: import('ws').WebSocket, server: import('ws').WebSocketServer) {
-  console.log('A client connected');
+import { getWebSocketServer } from 'next-ws/server';
 
-  client.on('message', (message) => {
-    console.log('Received message:', message);
-    client.send(message);
-  });
-
-  client.once('close', () => {
-    console.log('A client disconnected');
-  });
+export async function announce(text: string) {
+  for (const client of getWebSocketServer()?.clients ?? []) client.send(text);
 }
 ```
 
-You can now connect to your WebSocket server, send it a message and receive the same message back.
+### Custom servers
 
-### Chat Room
+With a custom server, create the HTTP and WebSocket servers yourself and hand them to next-ws before Next.js starts:
 
-See the [chat room example](https://github.com/k0d13/next-ws/tree/main/examples/chat-room).
+```ts
+import { AsyncLocalStorage } from 'node:async_hooks';
+import { createServer } from 'node:http';
+import next from 'next';
+import { setHttpServer, setWebSocketServer } from 'next-ws/server';
+import { WebSocketServer } from 'ws';
 
-### WebSocket Proxy
+// The `next` CLI sets this up itself, a custom server has to do it too
+globalThis.AsyncLocalStorage = AsyncLocalStorage;
 
-Forward connections to another WebSocket server, using a catch-all route to keep the rest of the path. See the [websocket proxy example](https://github.com/k0d13/next-ws/tree/main/examples/websocket-proxy).
+const httpServer = createServer();
+setHttpServer(httpServer);
+setWebSocketServer(new WebSocketServer({ noServer: true }));
+
+const app = next({ dev: process.env.NODE_ENV !== 'production' });
+await app.prepare();
+httpServer.on('request', app.getRequestHandler()).listen(3000);
+```
+
+### Running several instances
+
+Clients connected to different servers cannot see each other. An adapter connects the servers through a message broker, such as Redis pub/sub. Set one with `setAdapter()` in a custom server, and every message a client sends then reaches the other clients on the same route, on every instance, without the sender getting it back.
+
+An adapter implements four methods, and only ever handles strings:
+
+```ts
+import type { Adapter } from 'next-ws/server';
+
+class RedisAdapter implements Adapter {
+  broadcast(room: string, message: string) {} // Publish to every instance
+  subscribe(room: string, handler: (message: string) => void) {} // Start receiving a room
+  unsubscribe(room: string) {} // Stop, once the last local client has left
+  close() {} // Clean up connections
+}
+```
+
+See the [multi-instance example](https://github.com/k0d13/next-ws/tree/main/examples/multi-instance) for a complete Redis adapter.
+
+## 🌀 Examples
+
+Each example is a complete app you can copy.
+
+| Example                                                                                | Shows                                                                         |
+| -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| [Chat](https://github.com/k0d13/next-ws/tree/main/examples/chat)                       | Rooms from route params, sessions from cookies, presence, typing, reconnects. |
+| [Live dashboard](https://github.com/k0d13/next-ws/tree/main/examples/live-dashboard)   | Server push on an interval, cleaning up, sending from a server action.        |
+| [Custom server](https://github.com/k0d13/next-ws/tree/main/examples/custom-server)     | Your own HTTP server, extra routes and graceful shutdown.                     |
+| [Multi-instance](https://github.com/k0d13/next-ws/tree/main/examples/multi-instance)   | Sharing rooms between servers with a Redis adapter.                           |
+| [WebSocket proxy](https://github.com/k0d13/next-ws/tree/main/examples/websocket-proxy) | Forwarding connections to another WebSocket server from a catch-all route.    |
 
 ## 🔒 HTTPS and `wss://`
 
@@ -119,3 +183,14 @@ const httpsServer = createServer({
 });
 setHttpServer(httpsServer);
 ```
+
+## 🧪 Development
+
+```bash
+pnpm install
+pnpm test:unit         # Unit tests and patch snapshots against real Next.js releases
+pnpm test:integration  # Real Next.js apps in dev and production, over real WebSockets
+pnpm check             # Types, lint, format and unused code
+```
+
+The integration tests use Redis when `REDIS_URL` is set, and a small stand-in broker otherwise.

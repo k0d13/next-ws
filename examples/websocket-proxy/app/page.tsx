@@ -18,7 +18,6 @@ export default function Page() {
     <div style={{ maxWidth: '50vh' }}>
       <ul>
         {messages.map((message, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: messages are append only
           <li key={i}>{message}</li>
         ))}
       </ul>

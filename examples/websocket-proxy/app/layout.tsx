@@ -1,4 +1,6 @@
-export default function Layout({ children }: React.PropsWithChildren) {
+import type { ReactNode } from 'react';
+
+export default function Layout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" style={{ fontFamily: 'sans-serif' }}>
       <body
