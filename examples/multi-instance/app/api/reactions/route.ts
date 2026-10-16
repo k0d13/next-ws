@@ -26,7 +26,11 @@ export async function UPGRADE(client: WebSocket, _server: WebSocketServer, reque
       return;
     }
     // Only pass on well-formed reactions, the sender has already shown its own
-    if (isReaction(message)) void broadcast(room, JSON.stringify(message), { except: client });
+    if (!isReaction(message)) return;
+    // Redis can reject the publish, report it rather than leave the rejection unhandled
+    broadcast(room, JSON.stringify(message), { except: client }).catch((cause: unknown) => {
+      console.error(`Could not broadcast a reaction to ${room}`, cause);
+    });
   });
 
   const hello: Hello = { type: 'hello', instance: process.env.INSTANCE_NAME ?? 'unknown' };
