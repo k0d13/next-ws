@@ -20,7 +20,9 @@ export function UPGRADE(
   // build this from the request, the Host header is chosen by the caller
   const origin =
     process.env.UPSTREAM_URL ?? `ws://localhost:${process.env.PORT ?? 3000}/api/upstream`;
-  const path = context.params.path.join('/');
+  // Params are decoded, so encode each segment again or a `%3F` in the path
+  // would become a query string upstream
+  const path = context.params.path.map(encodeURIComponent).join('/');
   const upstream = new WebSocket(`${origin}/${path}${request.nextUrl.search}`, {
     handshakeTimeout: 10_000,
   });
