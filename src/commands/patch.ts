@@ -22,9 +22,7 @@ export default defineCommand({
 
     if (semver.ltr(current, minimum)) {
       // The installed version is lower than the minimum supported version
-      console.error(
-        `Next.js v${current} is not supported, a minimum of v${minimum} is required`,
-      );
+      console.error(`Next.js v${current} is not supported, a minimum of v${minimum} is required`);
       process.exit(1);
     }
 
@@ -34,9 +32,7 @@ export default defineCommand({
       console.warn(
         `Next.js v${current} is not officially supported, a maximum of v${maximum} is recommended.`,
       );
-      const confirm =
-        options.yes ||
-        (await console.confirm('Are you sure you want to proceed?'));
+      const confirm = options.yes || (await console.confirm('Are you sure you want to proceed?'));
 
       if (confirm) {
         patch = patches[patches.length - 1];

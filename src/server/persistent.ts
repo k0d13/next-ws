@@ -1,3 +1,6 @@
+import type { Adapter } from './helpers/adapter.js';
+import type { RequestStorage } from './helpers/store.js';
+
 function useGlobal<T>(key: PropertyKey) {
   return [
     function get() {
@@ -25,16 +28,19 @@ const [getHttpServer, setHttpServer, useHttpServer] = //
 export {
   /**
    * Get the HTTP server instance.
+   *
    * @returns Existing HTTP server instance if even
    */
   getHttpServer,
   /**
    * Set the HTTP server instance.
+   *
    * @param value HTTP server instance
    */
   setHttpServer,
   /**
    * Get or set the HTTP server instance.
+   *
    * @param getter Function to get the HTTP server instance
    * @returns Existing or created HTTP server instance
    */
@@ -51,16 +57,19 @@ const [getWebSocketServer, setWebSocketServer, useWebSocketServer] = //
 export {
   /**
    * Get the WebSocket server instance.
+   *
    * @returns Existing WebSocket server instance if even
    */
   getWebSocketServer,
   /**
    * Set the WebSocket server instance.
+   *
    * @param value WebSocket server instance
    */
   setWebSocketServer,
   /**
    * Get or set the WebSocket server instance.
+   *
    * @param getter Function to get the WebSocket server instance
    * @returns Existing or created WebSocket server instance
    */
@@ -70,23 +79,26 @@ export {
 // ===== Request Storage ===== //
 
 const [getRequestStorage, setRequestStorage, useRequestStorage] = //
-  useGlobal<import('./helpers/store').RequestStorage>(
+  useGlobal<RequestStorage>(
     Symbol.for('next-ws.request-store'), //
   );
 
 export {
   /**
    * Get the request storage instance.
+   *
    * @returns Existing request storage instance if even
    */
   getRequestStorage,
   /**
    * Set the request storage instance.
+   *
    * @param value Request storage instance
    */
   setRequestStorage,
   /**
    * Get or set the request storage instance.
+   *
    * @param getter Function to get the request storage instance
    * @returns Existing or created request storage instance
    */
@@ -96,23 +108,26 @@ export {
 // ===== Adapter ===== //
 
 const [getAdapter, setAdapter, useAdapter] = //
-  useGlobal<import('./helpers/adapter').Adapter | undefined>(
+  useGlobal<Adapter | undefined>(
     Symbol.for('next-ws.adapter'), //
   );
 
 export {
   /**
    * Get the adapter instance.
+   *
    * @returns Existing adapter instance if set
    */
   getAdapter,
   /**
    * Set the adapter instance.
+   *
    * @param value Adapter instance
    */
   setAdapter,
   /**
    * Get or set the adapter instance.
+   *
    * @param getter Function to get the adapter instance
    * @returns Existing or created adapter instance
    */

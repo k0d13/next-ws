@@ -3,9 +3,10 @@ import { rename, rm, writeFile } from 'node:fs/promises';
 import { setTimeout } from 'node:timers/promises';
 
 /**
- * Write a file by writing a temporary file next to it and renaming it over the original, so
- * readers never see it empty or half written. Package managers run every workspace's `prepare`
- * at once, and those all patch the same Next.js installation.
+ * Write a file by writing a temporary file next to it and renaming it over the original, so readers
+ * never see it empty or half written. Package managers run every workspace's `prepare` at once, and
+ * those all patch the same Next.js installation.
+ *
  * @param path The file to write
  * @param data The contents to write
  */
@@ -21,8 +22,9 @@ export async function writeFileAtomic(path: string, data: string) {
 }
 
 /**
- * Windows refuses to rename over a file while another process is reading or replacing it, so
- * retry for a short while when that happens.
+ * Windows refuses to rename over a file while another process is reading or replacing it, so retry
+ * for a short while when that happens.
+ *
  * @param from The file to rename
  * @param to The path to rename it to
  */

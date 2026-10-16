@@ -7,14 +7,9 @@ import { findMatchingRoute } from './helpers/match.js';
 import { importRouteModule } from './helpers/module.js';
 import { toNextRequest } from './helpers/request.js';
 import { createRequestStore } from './helpers/store.js';
-import {
-  useHttpServer,
-  useRequestStorage,
-  useWebSocketServer,
-} from './persistent.js';
+import { useHttpServer, useRequestStorage, useWebSocketServer } from './persistent.js';
 
-const WebSocketServer =
-  ws.WebSocketServer || (ws as { Server?: typeof ws.WebSocketServer }).Server;
+const WebSocketServer = ws.WebSocketServer || (ws as { Server?: typeof ws.WebSocketServer }).Server;
 
 export interface SetupOptions {
   adapter?: Adapter;
@@ -22,18 +17,15 @@ export interface SetupOptions {
 
 /**
  * Attach the WebSocket server to the HTTP server.
+ *
  * @param nextServer Next.js Node server instance
  * @param options Setup options including optional adapter
  */
-export function setupWebSocketServer(
-  nextServer: NextNodeServer,
-  options?: SetupOptions,
-) {
+export function setupWebSocketServer(nextServer: NextNodeServer, options?: SetupOptions) {
   const httpServer = //
     // @ts-expect-error - serverOptions is protected
     useHttpServer(() => nextServer.serverOptions?.httpServer);
-  if (!httpServer)
-    return logger.error('[next-ws] was not able to find the HTTP server');
+  if (!httpServer) return logger.error('[next-ws] was not able to find the HTTP server');
   const wsServer = //
     useWebSocketServer(() => new WebSocketServer({ noServer: true }));
   const requestStorage = //
@@ -81,10 +73,7 @@ export function setupWebSocketServer(
       // Reading `userland` can still throw if `ensureUserland()` in
       // `importRouteModule` did not fully resolve it. End the socket rather
       // than leaving the client waiting indefinitely on the upgrade.
-      logger.error(
-        `[next-ws] could not access handlers for page ${pathname}`,
-        cause,
-      );
+      logger.error(`[next-ws] could not access handlers for page ${pathname}`, cause);
       return socket.end();
     }
     if (
@@ -114,11 +103,7 @@ export function setupWebSocketServer(
 
             for (const localClient of clients) {
               if (localClient.readyState === ws.WebSocket.OPEN) {
-                localClient.send(
-                  typeof message === 'string'
-                    ? message
-                    : JSON.stringify(message),
-                );
+                localClient.send(typeof message === 'string' ? message : JSON.stringify(message));
               }
             }
           });
@@ -138,8 +123,7 @@ export function setupWebSocketServer(
         else if (handleSocket) {
           const handleClose = //
             await handleSocket(client, message, wsServer, context);
-          if (typeof handleClose === 'function')
-            client.once('close', () => handleClose());
+          if (typeof handleClose === 'function') client.once('close', () => handleClose());
         }
 
         // Intercept client messages to broadcast via adapter
@@ -151,10 +135,7 @@ export function setupWebSocketServer(
           });
         }
       } catch (cause) {
-        logger.error(
-          `[next-ws] error in socket handler for '${pathname}'`,
-          cause,
-        );
+        logger.error(`[next-ws] error in socket handler for '${pathname}'`, cause);
         try {
           client.close(1011, 'Internal Server Error');
         } catch {}

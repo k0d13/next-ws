@@ -1,0 +1,8 @@
+{
+  "$schema": "./node_modules/knip/schema.json",
+  "ignoreExportsUsedInFile": true,
+  "ignoreDependencies": ["@favware/npm-deprecate"],
+  "ignoreIssues": {
+    "src/server/persistent.ts": ["exports"]
+  }
+}

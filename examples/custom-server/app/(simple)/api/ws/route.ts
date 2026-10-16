@@ -28,8 +28,7 @@ export async function UPGRADE(
   client.on('message', (message) => {
     // Forward the message to all other clients
     for (const other of server.clients)
-      if (client !== other && other.readyState === other.OPEN)
-        other.send(message);
+      if (client !== other && other.readyState === other.OPEN) other.send(message);
   });
 
   client.send(

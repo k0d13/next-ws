@@ -4,6 +4,7 @@ import { writeFileAtomic } from './fs.js';
 
 /**
  * Resolve the path to the next-ws installation directory.
+ *
  * @returns The installation directory for this package
  */
 export function resolveNextWsDirectory() {
@@ -14,6 +15,7 @@ export function resolveNextWsDirectory() {
 
 /**
  * Resolve the path to the Next.js installation directory.
+ *
  * @returns The Next.js installation directory
  */
 export function resolveNextDirectory() {
@@ -24,6 +26,7 @@ export function resolveNextDirectory() {
 
 /**
  * Get the version of Next.js from the installation directory's `package.json`.
+ *
  * @returns The version of Next.js
  */
 export async function getInstalledNextVersion() {
@@ -39,6 +42,7 @@ export interface Trace {
 
 /**
  * Get the next-ws trace of the current installation of Next.js.
+ *
  * @returns Trace object
  */
 export async function readTrace() {
@@ -50,6 +54,7 @@ export async function readTrace() {
 
 /**
  * Set the next-ws trace of the current installation of Next.js.
+ *
  * @param trace Trace object
  */
 export async function writeTrace(trace: Trace) {

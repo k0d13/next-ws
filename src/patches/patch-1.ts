@@ -6,8 +6,9 @@ import { resolveNextWsDirectory } from './helpers/next.js';
 const CommentLine = $.Comment as typeof $.CommentLine;
 
 /**
- * Add `require('next-ws/server').setupWebSocketServer(this)` to the constructor of
- * `NextNodeServer` in `next/dist/server/next-server.js`.
+ * Add `require('next-ws/server').setupWebSocketServer(this)` to the constructor of `NextNodeServer`
+ * in `next/dist/server/next-server.js`.
+ *
  * @remark Starting the server and handling connections is part of the core
  */
 export const patchNextNodeServer = definePatchStep({
@@ -44,9 +45,7 @@ export const patchNextNodeServer = definePatchStep({
   },
 });
 
-/**
- * Prevent Next.js from immediately closing WebSocket connections on matched routes.
- */
+/** Prevent Next.js from immediately closing WebSocket connections on matched routes. */
 export const patchRouterServer = definePatchStep({
   title: 'Prevent Next.js from immediately closing WebSocket connections',
   path: 'next:dist/server/lib/router-server.js',
@@ -69,9 +68,7 @@ export const patchRouterServer = definePatchStep({
   },
 });
 
-/**
- * Add UPGRADE as allowed route HTTP method.
- */
+/** Add UPGRADE as allowed route HTTP method. */
 export const patchNextTypesPlugin = definePatchStep({
   title: 'Add UPGRADE as allowed export from route modules',
   path: 'next:dist/build/webpack/plugins/next-types-plugin/index.js',
@@ -93,9 +90,7 @@ export const patchNextTypesPlugin = definePatchStep({
   },
 });
 
-/**
- * Add WebSocket contextual headers resolution to request headers.
- */
+/** Add WebSocket contextual headers resolution to request headers. */
 export const patchHeaders = definePatchStep({
   title: 'Add WebSocket contextual headers resolution to request headers',
   path: 'next:dist/client/components/headers.js',
@@ -127,9 +122,7 @@ export const patchHeaders = definePatchStep({
   },
 });
 
-/**
- * Add WebSocket contextual cookies resolution to request cookies.
- */
+/** Add WebSocket contextual cookies resolution to request cookies. */
 export const patchCookies = definePatchStep({
   title: 'Add WebSocket contextual cookies resolution to request cookies',
   path: 'next:dist/client/components/headers.js',
@@ -164,11 +157,5 @@ export const patchCookies = definePatchStep({
 export default definePatch({
   name: 'patch-1',
   versions: '>=13.5.1 <=14.2.32',
-  steps: [
-    patchNextNodeServer,
-    patchNextTypesPlugin,
-    patchRouterServer,
-    patchHeaders,
-    patchCookies,
-  ],
+  steps: [patchNextNodeServer, patchNextTypesPlugin, patchRouterServer, patchHeaders, patchCookies],
 });

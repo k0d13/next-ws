@@ -5,6 +5,7 @@ import gt from 'semver/functions/gt.js';
 
 /**
  * Get the maximum version from a range
+ *
  * @param range Range or string
  * @param loose Options or boolean
  * @returns Maximum version
@@ -27,8 +28,7 @@ export function maxVersion(range: Range | string, loose?: Options | boolean) {
         version.raw = version.format();
       }
 
-      if (!maximumVersion || gt(version, maximumVersion))
-        maximumVersion = version;
+      if (!maximumVersion || gt(version, maximumVersion)) maximumVersion = version;
     }
   }
 

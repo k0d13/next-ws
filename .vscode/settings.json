@@ -12,14 +12,9 @@
 
   "[typescript]": {
     "editor.formatOnSave": true,
-    "editor.defaultFormatter": "biomejs.biome",
-    "editor.codeActionsOnSave": {
-      "source.organizeImports.biome": "explicit"
-    }
+    "editor.defaultFormatter": "oxc.oxc-vscode",
+    "js/ts.preferences.importModuleSpecifierEnding": "js"
   },
-
-  // TypeScript
-  "typescript.preferences.importModuleSpecifierEnding": "js",
 
   // Code Spell Checker
   "cSpell.language": "en-AU",

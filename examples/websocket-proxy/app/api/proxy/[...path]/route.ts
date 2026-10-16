@@ -17,8 +17,7 @@ export function UPGRADE(
   // here it defaults to the stand-in upstream route in this example. Never
   // build this from the request, the Host header is chosen by the caller
   const origin =
-    process.env.UPSTREAM_URL ??
-    `ws://localhost:${process.env.PORT ?? 3000}/api/upstream`;
+    process.env.UPSTREAM_URL ?? `ws://localhost:${process.env.PORT ?? 3000}/api/upstream`;
   const path = context.params.path.join('/');
   const upstream = new WebSocket(`${origin}/${path}${request.nextUrl.search}`, {
     handshakeTimeout: 10_000,
@@ -29,8 +28,7 @@ export function UPGRADE(
   const pending: [import('ws').RawData, boolean][] = [];
   let pendingBytes = 0;
   client.on('message', (data, isBinary) => {
-    if (upstream.readyState === WebSocket.OPEN)
-      return forward(client, upstream, data, isBinary);
+    if (upstream.readyState === WebSocket.OPEN) return forward(client, upstream, data, isBinary);
 
     pendingBytes += byteLength(data);
     if (pendingBytes > MAX_PENDING_BYTES) {
@@ -41,24 +39,18 @@ export function UPGRADE(
     pending.push([data, isBinary]);
   });
   upstream.once('open', () => {
-    for (const [data, isBinary] of pending.splice(0))
-      upstream.send(data, { binary: isBinary });
+    for (const [data, isBinary] of pending.splice(0)) upstream.send(data, { binary: isBinary });
     pendingBytes = 0;
   });
 
   upstream.on('message', (data, isBinary) => {
-    if (client.readyState === WebSocket.OPEN)
-      forward(upstream, client, data, isBinary);
+    if (client.readyState === WebSocket.OPEN) forward(upstream, client, data, isBinary);
   });
 
   // Close each side when the other closes, codes like 1005 and 1006 can't be
   // sent so only forward codes that are valid to send
   const canSend = (code: number) =>
-    (code >= 1000 &&
-      code <= 1014 &&
-      code !== 1004 &&
-      code !== 1005 &&
-      code !== 1006) ||
+    (code >= 1000 && code <= 1014 && code !== 1004 && code !== 1005 && code !== 1006) ||
     (code >= 3000 && code <= 4999);
   upstream.once('close', (code, reason) => {
     if (canSend(code)) client.close(code, reason);
@@ -92,7 +84,6 @@ function forward(
 }
 
 function byteLength(data: import('ws').RawData) {
-  if (Array.isArray(data))
-    return data.reduce((total, chunk) => total + chunk.byteLength, 0);
+  if (Array.isArray(data)) return data.reduce((total, chunk) => total + chunk.byteLength, 0);
   return data.byteLength;
 }

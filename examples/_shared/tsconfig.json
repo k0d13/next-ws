@@ -1,42 +1,12 @@
 {
-  "include": ["src/**/*"],
-  "exclude": ["node_modules"],
-
+  "extends": "../../tsconfig.base.json",
+  "include": ["src"],
   "compilerOptions": {
-    "allowUnreachableCode": false,
-    "allowUnusedLabels": false,
-    "exactOptionalPropertyTypes": false,
-    "noFallthroughCasesInSwitch": true,
-    "noImplicitOverride": true,
-    "noImplicitReturns": true,
-    "noPropertyAccessFromIndexSignature": false,
-    "noUncheckedIndexedAccess": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "strict": true,
-
-    "allowArbitraryExtensions": false,
-    "allowImportingTsExtensions": false,
-    "module": "ESNext",
-    "moduleResolution": "Node",
-    "resolveJsonModule": true,
-
-    "declaration": true,
-    "declarationMap": true,
-    "importHelpers": false,
-    "newLine": "lf",
-    "noEmitHelpers": true,
-    "removeComments": false,
-    "sourceMap": true,
-
-    "experimentalDecorators": true,
-    "lib": ["DOM", "ESNext"],
-    "target": "ES2022",
-    "useDefineForClassFields": true,
-    "skipLibCheck": true,
-
+    "rootDir": "./src",
     "outDir": "./dist",
-    "paths": { "~/*": ["./src/*"] },
-    "jsx": "react"
+    "noEmit": false,
+    "declaration": true,
+    "allowImportingTsExtensions": false,
+    "types": []
   }
 }

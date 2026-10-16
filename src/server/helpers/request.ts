@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server';
 
 /**
  * Convert a Node.js HTTP incoming message instance to a Next.js request instance.
+ *
  * @param message Node.js HTTP incoming message instance
  * @returns Next.js request instance
  */

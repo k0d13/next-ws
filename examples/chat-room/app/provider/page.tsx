@@ -14,8 +14,7 @@ function Status() {
 
   useEffect(() => {
     if (!socket) return;
-    const onMessage = (event: MessageEvent) =>
-      setMessage(JSON.parse(event.data).content);
+    const onMessage = (event: MessageEvent) => setMessage(JSON.parse(event.data).content);
     socket.addEventListener('message', onMessage);
     return () => socket.removeEventListener('message', onMessage);
   }, [socket]);

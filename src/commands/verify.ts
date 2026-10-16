@@ -21,9 +21,7 @@ export default defineCommand({
         console.warn('Next.js has not been patched, running the patch command');
         return patchCommand.action({ yes: true });
       } else {
-        console.error(
-          "Next.js has not been patched, you'll need to run the patch command",
-        );
+        console.error("Next.js has not been patched, you'll need to run the patch command");
         process.exit(1);
       }
     }

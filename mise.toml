@@ -1,0 +1,6 @@
+[tools]
+node = "24.21.0"
+pnpm = "11.28.6"
+
+[env]
+_.path = ["{{config_root}}/node_modules/.bin"]

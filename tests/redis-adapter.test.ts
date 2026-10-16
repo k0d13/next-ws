@@ -56,10 +56,7 @@ test.describe('Redis Adapter Multi-Instance', () => {
       stdio: 'pipe',
     });
 
-    await Promise.all([
-      waitForServer(PORT_1, instance1),
-      waitForServer(PORT_2, instance2),
-    ]);
+    await Promise.all([waitForServer(PORT_1, instance1), waitForServer(PORT_2, instance2)]);
 
     await sleep(1000);
   });
@@ -79,9 +76,7 @@ test.describe('Redis Adapter Multi-Instance', () => {
     }
   });
 
-  test('messages broadcast across instances via Redis adapter', async ({
-    browser,
-  }) => {
+  test('messages broadcast across instances via Redis adapter', async ({ browser }) => {
     const page1 = await browser.newPage();
     const page2 = await browser.newPage();
 
@@ -175,9 +170,7 @@ test.describe('Redis Adapter Multi-Instance', () => {
     }
   });
 
-  test('adapter handles client disconnection and reconnection', async ({
-    browser,
-  }) => {
+  test('adapter handles client disconnection and reconnection', async ({ browser }) => {
     const page1 = await browser.newPage();
     const page2 = await browser.newPage();
 
@@ -215,11 +208,7 @@ test.describe('Redis Adapter Multi-Instance', () => {
   });
 });
 
-async function waitForServer(
-  port: number,
-  process: ChildProcess,
-  timeout = 30000,
-): Promise<void> {
+async function waitForServer(port: number, process: ChildProcess, timeout = 30000): Promise<void> {
   const readyPromise = new Promise<void>((resolve, reject) => {
     let timer: NodeJS.Timeout;
 
@@ -247,19 +236,14 @@ async function waitForServer(
 
     timer = setTimeout(() => {
       cleanup();
-      reject(
-        new Error(`Server on port ${port} did not start within ${timeout}ms`),
-      );
+      reject(new Error(`Server on port ${port} did not start within ${timeout}ms`));
     }, timeout);
   });
 
   await readyPromise;
 }
 
-async function waitForProcessExit(
-  proc: ChildProcess,
-  timeout = 5000,
-): Promise<void> {
+async function waitForProcessExit(proc: ChildProcess, timeout = 5000): Promise<void> {
   return new Promise((resolve) => {
     // Already exited
     if (proc.exitCode !== null || proc.signalCode) return resolve();

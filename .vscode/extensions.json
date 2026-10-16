@@ -1,6 +1,6 @@
 {
   "recommendations": [
-    "biomejs.biome",
+    "oxc.oxc-vscode",
     "streetsidesoftware.code-spell-checker",
     "gruntfuggly.todo-tree",
     "ms-playwright.playwright"

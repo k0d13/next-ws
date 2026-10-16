@@ -3,7 +3,7 @@ name: Bump Next.js Version
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 0 * * *"
+    - cron: '0 0 * * *'
 permissions:
   contents: write
   pull-requests: write
@@ -20,8 +20,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: ./.github/actions/node
+      - name: Setup toolchain
+        uses: ./.github/actions/toolchain
 
       - name: Get current Next.js version
         id: get-current-version
@@ -34,7 +34,7 @@ jobs:
       - name: Get latest Next.js version
         id: get-latest-version
         run: |
-          latest_version=$(pnpm show next version)
+          latest_version=$(npm view next version)
           echo "Latest version is $latest_version"
           echo "latest_version=$latest_version" >> $GITHUB_ENV
 
@@ -61,8 +61,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: ./.github/actions/node
+      - name: Setup toolchain
+        uses: ./.github/actions/toolchain
 
       - name: Update Next.js version
         run: |
@@ -89,8 +89,8 @@ jobs:
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GH_PULL_REQUEST_TOKEN }}
-          commit-message: "Bump patch supported range to ${{ needs.check-next-version.outputs.next_version }}"
-          branch: "chore/bump-nextjs-${{ needs.check-next-version.outputs.next_version }}"
-          title: "Bump patch supported range to ${{ needs.check-next-version.outputs.next_version }}"
-          body: "Bump patch supported range to ${{ needs.check-next-version.outputs.next_version }}"
+          commit-message: 'Bump patch supported range to ${{ needs.check-next-version.outputs.next_version }}'
+          branch: 'chore/bump-nextjs-${{ needs.check-next-version.outputs.next_version }}'
+          title: 'Bump patch supported range to ${{ needs.check-next-version.outputs.next_version }}'
+          body: 'Bump patch supported range to ${{ needs.check-next-version.outputs.next_version }}'
           delete-branch: true

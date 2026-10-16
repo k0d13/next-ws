@@ -1,11 +1,12 @@
 {
   "name": "@examples/websocket-proxy",
   "private": true,
+  "type": "module",
   "scripts": {
     "build": "next build",
-    "start": "next start",
     "dev": "next dev",
-    "prepare": "next-ws patch"
+    "prepare": "next-ws patch",
+    "start": "next start"
   },
   "dependencies": {
     "next": "catalog:",
