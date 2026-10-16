@@ -83,7 +83,10 @@ export function defineCommand<const TOptions extends OptionDefinition[]>(
   return {
     ...definition,
     parse(parents: CommandGroup[], argv: string[]) {
-      const parsed = minimist(argv);
+      const parsed = minimist(argv, {
+        boolean: ['help', ...this.options.map((o) => o.name)],
+        alias: Object.fromEntries(this.options.map((o) => [o.name, o.alias ?? []])),
+      });
       if (parsed.help) return void console.log(buildCommandHelp(parents, this));
       return this.action(parsed as never);
     },
@@ -104,7 +107,7 @@ ${command.description}
 
 Options:
   --help | Show this help message and exit.
-  ${command.options.map((o) => `--${o.name} | ${o.description}`).join('\n  ')}
+  ${command.options.map((o) => `${formatOption(o)} | ${o.description}`).join('\n  ')}
 `;
 }
 
@@ -112,4 +115,9 @@ Options:
 
 export interface OptionDefinition extends Definition {
   alias?: string | string[];
+}
+
+function formatOption(option: OptionDefinition) {
+  const aliases = [option.alias ?? []].flat().map((a) => `-${a}`);
+  return [`--${option.name}`, ...aliases].join(', ');
 }

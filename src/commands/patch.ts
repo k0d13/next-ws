@@ -1,5 +1,6 @@
 import { getInstalledNextVersion, writeTrace } from '~/patches/helpers/next.js';
 import patches from '~/patches/index.js';
+import { version as nextWsVersion } from '../../package.json';
 import * as console from './helpers/console.js';
 import { defineCommand } from './helpers/define.js';
 import * as semver from './helpers/semver.js';
@@ -41,7 +42,7 @@ export default defineCommand({
           'If you encounter any issues please report them at https://github.com/k0d13/next-ws/issues',
         );
       } else {
-        console.error('Aborted');
+        console.error('Aborted, pass --yes to patch without asking');
         process.exit(1);
       }
     }
@@ -57,7 +58,7 @@ export default defineCommand({
     await patch.execute();
 
     console.info('Saving patch trace file...');
-    await writeTrace({ patch: patch.versions, version: current });
+    await writeTrace({ patch: patch.versions, version: current, nextWs: nextWsVersion });
 
     console.info('All done!');
   },

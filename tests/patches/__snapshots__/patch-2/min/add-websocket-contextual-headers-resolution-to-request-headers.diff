@@ -1,0 +1,19 @@
+# next@15.0.0
+===================================================================
+--- a/dist/server/request/headers.js
++++ b/dist/server/request/headers.js
+@@ -17,6 +17,14 @@
+ const _dynamicrenderingutils = require("../dynamic-rendering-utils");
+ const _creatededupedbycallsiteservererrorloger = require("../create-deduped-by-callsite-server-error-loger");
+ function headers() {
++    {
++        // @patch headers
++        const kRequestStorage = Symbol.for('next-ws.request-store');
++        const requestStorage = Reflect.get(globalThis, kRequestStorage);
++        const contextualHeaders = requestStorage?.getStore()?.headers;
++        if (contextualHeaders) return contextualHeaders;
++    }
++
+     const workStore = _workasyncstorageexternal.workAsyncStorage.getStore();
+     const workUnitStore = _workunitasyncstorageexternal.workUnitAsyncStorage.getStore();
+     if (workStore) {

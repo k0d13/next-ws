@@ -1,0 +1,2 @@
+# Patch snapshots are compared byte for byte, so keep them identical on every platform
+tests/patches/__snapshots__/** text eol=lf

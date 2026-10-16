@@ -78,6 +78,13 @@ jobs:
           echo "Updating $patch_file to $next_version"
           sed -i "s/\(versions: .*\) <=[0-9\.]\+/\1 <=$next_version/" "$patch_file"
 
+      # The `max` snapshots follow the newest supported version, so the pull request
+      # shows a diff of whatever Next.js changed in the files next-ws patches
+      - name: Update patch snapshots
+        run: pnpm exec vitest run --project patches --update
+        # Still open the pull request if a patch no longer applies, so its CI shows why
+        continue-on-error: true
+
       - name: Add new changeset
         run: |
           unique_id=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 13; echo)

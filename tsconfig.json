@@ -1,5 +1,9 @@
 {
   "extends": "./tsconfig.base.json",
-  "exclude": ["node_modules", "dist", "examples", "tests/.report", "tests/.results", ".coverage"],
-  "compilerOptions": { "paths": { "~/*": ["./src/*"] } }
+  "exclude": ["node_modules", "dist", "examples", "tests/integration/fixtures", ".coverage"],
+  "compilerOptions": {
+    "paths": {
+      "~/*": ["./src/*"]
+    }
+  }
 }

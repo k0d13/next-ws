@@ -1,17 +1,21 @@
+import type { RouteContext } from 'next-ws/server';
+import type { NextRequest } from 'next/server';
+import type { WebSocket, WebSocketServer } from 'ws';
+
 // Stands in for the external server the proxy forwards to
 
 export function GET() {
-  const headers = new Headers();
-  headers.set('Connection', 'Upgrade');
-  headers.set('Upgrade', 'websocket');
-  return new Response('Upgrade Required', { status: 426, headers });
+  return new Response('Connect to this route with a WebSocket', {
+    status: 426,
+    headers: { Connection: 'Upgrade', Upgrade: 'websocket' },
+  });
 }
 
 export function UPGRADE(
-  client: import('ws').WebSocket,
-  _server: import('ws').WebSocketServer,
-  _request: import('next/server').NextRequest,
-  context: import('next-ws/server').RouteContext<'/api/upstream/[...path]'>,
+  client: WebSocket,
+  _server: WebSocketServer,
+  _request: NextRequest,
+  context: RouteContext<'/api/upstream/[...path]'>,
 ) {
   const path = context.params.path.join('/');
   client.send(`Connected to upstream at /${path}`);

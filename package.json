@@ -27,13 +27,15 @@
   ],
   "type": "module",
   "exports": {
-    "./client": {
-      "types": "./dist/client/index.d.cts",
-      "default": "./dist/client/index.cjs"
-    },
     "./server": {
-      "types": "./dist/server/index.d.cts",
-      "default": "./dist/server/index.cjs"
+      "import": {
+        "types": "./dist/server/index.d.mts",
+        "default": "./dist/server/index.mjs"
+      },
+      "require": {
+        "types": "./dist/server/index.d.cts",
+        "default": "./dist/server/index.cjs"
+      }
     },
     "./package.json": "./package.json"
   },
@@ -49,6 +51,7 @@
     "check:format": "oxfmt --check",
     "check:lint": "oxlint --deny-warnings",
     "check:types": "tsc --noEmit",
+    "coverage": "vitest run --project unit --project patches --coverage",
     "dev": "tsdown --watch",
     "fix": "pnpm run fix:lint && pnpm run fix:format",
     "fix:format": "oxfmt",
@@ -58,7 +61,9 @@
     "release:snapshot:publish": "pnpm build && changeset publish --tag beta --no-git-tag",
     "release:snapshot:version": "changeset version --snapshot beta",
     "release:version": "changeset version",
-    "test": "playwright test"
+    "test": "vitest run",
+    "test:integration": "vitest run --project integration",
+    "test:unit": "vitest run --project unit --project patches"
   },
   "dependencies": {
     "jscodeshift": "^17.3.0",
@@ -69,30 +74,31 @@
     "@changesets/changelog-git": "^0.2.1",
     "@changesets/cli": "^2.31.1",
     "@favware/npm-deprecate": "^2.0.0",
-    "@playwright/test": "^1.58.2",
     "@types/jscodeshift": "^17.3.0",
     "@types/minimist": "^1.2.5",
     "@types/node": "^24.19.2",
-    "@types/react": "catalog:",
     "@types/semver": "^7.7.1",
     "@types/ws": "^8.18.1",
+    "@vitest/coverage-v8": "^4.1.11",
     "chalk": "^5.6.2",
-    "ioredis": "catalog:",
+    "diff": "^9.0.0",
     "knip": "^6.41.0",
     "lefthook": "^2.2.2",
     "next": "catalog:",
     "oxfmt": "^0.73.0",
     "oxlint": "^1.88.0",
-    "react": "catalog:",
-    "react-dom": "catalog:",
+    "tar": "^7.5.22",
     "tsdown": "^0.22.14",
     "typescript": "^6.0.3",
+    "vitest": "^4.1.11",
     "ws": "^8.22.0"
   },
   "peerDependencies": {
-    "next": ">=13.5.1",
-    "react": "*",
-    "ws": "*"
+    "next": ">=15.0.0",
+    "ws": ">=8.0.0"
+  },
+  "engines": {
+    "node": ">=18.18.0"
   },
   "packageManager": "pnpm@11.28.6"
 }

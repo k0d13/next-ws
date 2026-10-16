@@ -1,6 +1,6 @@
 export type { Adapter } from './helpers/adapter.js';
 export type { RouteContext } from './helpers/module.js';
-export type { SocketHandler, UpgradeHandler } from './helpers/socket.js';
+export type { UpgradeHandler } from './helpers/socket.js';
 export {
   getAdapter,
   getHttpServer,

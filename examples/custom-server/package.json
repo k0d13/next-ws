@@ -1,21 +1,26 @@
 {
   "name": "@examples/custom-server",
   "private": true,
+  "type": "module",
   "scripts": {
     "build": "next build",
-    "dev": "tsx --require=\"./global.js\" server.ts",
+    "dev": "tsx server.ts --dev",
     "prepare": "next-ws patch",
-    "start": "NODE_ENV=production tsx --require=\"./global.js\" server.ts"
+    "start": "tsx server.ts"
   },
   "dependencies": {
     "next": "catalog:",
     "next-ws": "workspace:^",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "shared": "workspace:^"
+    "tsx": "^4.23.15",
+    "ws": "catalog:"
   },
   "devDependencies": {
+    "@types/node": "catalog:",
     "@types/react": "catalog:",
-    "tsx": "^4.21.0"
+    "@types/react-dom": "catalog:",
+    "@types/ws": "catalog:",
+    "typescript": "catalog:"
   }
 }

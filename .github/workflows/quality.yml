@@ -55,18 +55,76 @@ jobs:
       - name: Setup toolchain
         uses: ./.github/actions/toolchain
 
-      - name: Run tests
-        uses: docker://mcr.microsoft.com/playwright:v1.58.2-jammy
+      # The patch snapshot tests read real Next.js files out of published tarballs
+      - name: Cache Next.js tarballs
+        uses: actions/cache@v4
         with:
-          args: npx playwright test
+          path: node_modules/.cache/next-ws
+          key: next-dist-${{ hashFiles('src/patches/**') }}
+          restore-keys: next-dist-
 
-      - name: Upload test outputs
-        if: failure()
-        uses: actions/upload-artifact@v4
+      - name: Run unit and patch tests with coverage
+        run: pnpm coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7
         with:
-          name: test-outputs
-          path: |
-            tests/.report/
-            tests/.results/
-          include-hidden-files: true
-          retention-days: 7
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: .coverage/lcov.info
+          # Pull requests from forks have no token, which should not fail the run
+          fail_ci_if_error: false
+
+  integration:
+    name: Integration (next@${{ matrix.next }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The oldest supported release line, the newest 15.x and the newest overall
+        next: ['~15.0.0', '^15', 'latest']
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup toolchain
+        uses: ./.github/actions/toolchain
+
+      - name: Install the Next.js version under test
+        run: pnpm --filter @next-ws/integration-tests add next@${{ matrix.next }}
+
+      # The CLI tests patch real Next.js files out of a published tarball
+      - name: Cache Next.js tarballs
+        uses: actions/cache@v4
+        with:
+          path: node_modules/.cache/next-ws
+          key: next-dist-${{ hashFiles('src/patches/**') }}
+          restore-keys: next-dist-
+
+      - name: Run integration tests
+        run: pnpm test:integration
+        env:
+          REDIS_URL: redis://localhost:6379
+
+  examples:
+    name: Examples
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup toolchain
+        uses: ./.github/actions/toolchain
+
+      # `next build` type checks each example as well, so they cannot quietly go stale
+      - name: Build every example
+        run: pnpm --filter "./examples/*" build

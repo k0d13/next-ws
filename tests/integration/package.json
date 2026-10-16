@@ -1,0 +1,13 @@
+{
+  "name": "@next-ws/integration-tests",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "ioredis": "catalog:",
+    "next": "catalog:",
+    "next-ws": "workspace:^",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "ws": "^8.22.0"
+  }
+}

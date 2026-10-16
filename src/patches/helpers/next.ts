@@ -36,8 +36,12 @@ export async function getInstalledNextVersion() {
 }
 
 export interface Trace {
+  /** Version range of the patch that was applied. */
   patch: string;
+  /** Version of Next.js that was patched. */
   version: string;
+  /** Version of next-ws that applied the patch, whose path is written into the patched code. */
+  nextWs: string;
 }
 
 /**
@@ -48,7 +52,7 @@ export interface Trace {
 export async function readTrace() {
   const id = join(resolveNextDirectory(), '.next-ws-trace.json');
   return readFile(id, 'utf-8')
-    .then<Trace>(JSON.parse)
+    .then<Partial<Trace>>(JSON.parse)
     .catch(() => null);
 }
 

@@ -1,0 +1,19 @@
+# next@16.4.2
+===================================================================
+--- a/dist/server/request/cookies.js
++++ b/dist/server/request/cookies.js
+@@ -20,6 +20,14 @@
+ const _invarianterror = require("../../shared/lib/invariant-error");
+ const _usecachemessages = require("../use-cache/use-cache-messages");
+ function cookies() {
++    {
++        // @patch cookies
++        const kRequestStorage = Symbol.for('next-ws.request-store');
++        const requestStorage = Reflect.get(globalThis, kRequestStorage);
++        const contextualCookies = requestStorage?.getStore()?.cookies;
++        if (contextualCookies) return contextualCookies;
++    }
++
+     const callingExpression = 'cookies';
+     const workStore = _workasyncstorageexternal.workAsyncStorage.getStore();
+     const workUnitStore = _workunitasyncstorageexternal.workUnitAsyncStorage.getStore();

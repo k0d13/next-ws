@@ -1,0 +1,19 @@
+# next@15.0.0
+===================================================================
+--- a/dist/server/request/cookies.js
++++ b/dist/server/request/cookies.js
+@@ -18,6 +18,14 @@
+ const _dynamicrenderingutils = require("../dynamic-rendering-utils");
+ const _creatededupedbycallsiteservererrorloger = require("../create-deduped-by-callsite-server-error-loger");
+ function cookies() {
++    {
++        // @patch cookies
++        const kRequestStorage = Symbol.for('next-ws.request-store');
++        const requestStorage = Reflect.get(globalThis, kRequestStorage);
++        const contextualCookies = requestStorage?.getStore()?.cookies;
++        if (contextualCookies) return contextualCookies;
++    }
++
+     const callingExpression = 'cookies';
+     const workStore = _workasyncstorageexternal.workAsyncStorage.getStore();
+     const workUnitStore = _workunitasyncstorageexternal.workUnitAsyncStorage.getStore();

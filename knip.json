@@ -4,5 +4,12 @@
   "ignoreDependencies": ["@favware/npm-deprecate"],
   "ignoreIssues": {
     "src/server/persistent.ts": ["exports"]
+  },
+  "workspaces": {
+    ".": {},
+    "examples/*": {},
+    "tests/integration": {
+      "entry": ["fixtures/*/server.mjs", "fixtures/*/next.config.mjs", "fixtures/*/app/**/route.js"]
+    }
   }
 }

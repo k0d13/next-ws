@@ -1,0 +1,25 @@
+{
+  "name": "@examples/live-dashboard",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev",
+    "prepare": "next-ws patch",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "catalog:",
+    "next-ws": "workspace:^",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "ws": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@types/ws": "catalog:",
+    "typescript": "catalog:"
+  }
+}

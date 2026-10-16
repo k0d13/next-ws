@@ -1,31 +1,35 @@
-import { WebSocket } from 'ws';
+import type { RouteContext } from 'next-ws/server';
+import type { NextRequest } from 'next/server';
+import { WebSocket, type RawData, type WebSocketServer } from 'ws';
 
 export function GET() {
-  const headers = new Headers();
-  headers.set('Connection', 'Upgrade');
-  headers.set('Upgrade', 'websocket');
-  return new Response('Upgrade Required', { status: 426, headers });
+  return new Response('Connect to this route with a WebSocket', {
+    status: 426,
+    headers: { Connection: 'Upgrade', Upgrade: 'websocket' },
+  });
 }
 
 export function UPGRADE(
-  client: import('ws').WebSocket,
-  _server: import('ws').WebSocketServer,
-  request: import('next/server').NextRequest,
-  context: import('next-ws/server').RouteContext<'/api/proxy/[...path]'>,
+  client: WebSocket,
+  _server: WebSocketServer,
+  request: NextRequest,
+  context: RouteContext<'/api/proxy/[...path]'>,
 ) {
   // In a real app this would be an external server, e.g. wss://example.com,
   // here it defaults to the stand-in upstream route in this example. Never
   // build this from the request, the Host header is chosen by the caller
   const origin =
     process.env.UPSTREAM_URL ?? `ws://localhost:${process.env.PORT ?? 3000}/api/upstream`;
-  const path = context.params.path.join('/');
+  // Params are decoded, so encode each segment again or a `%3F` in the path
+  // would become a query string upstream
+  const path = context.params.path.map(encodeURIComponent).join('/');
   const upstream = new WebSocket(`${origin}/${path}${request.nextUrl.search}`, {
     handshakeTimeout: 10_000,
   });
 
   // The client is connected before the upstream is, so hold its messages until
   // then, up to a limit so a stalled upstream can't use up the server's memory
-  const pending: [import('ws').RawData, boolean][] = [];
+  const pending: [RawData, boolean][] = [];
   let pendingBytes = 0;
   client.on('message', (data, isBinary) => {
     if (upstream.readyState === WebSocket.OPEN) return forward(client, upstream, data, isBinary);
@@ -71,19 +75,14 @@ const MAX_BUFFERED_BYTES = 1024 * 1024;
 
 // Stop reading from one side while the other has too much waiting to be
 // written, so a slow reader can't fill the server's memory
-function forward(
-  from: import('ws').WebSocket,
-  to: import('ws').WebSocket,
-  data: import('ws').RawData,
-  isBinary: boolean,
-) {
+function forward(from: WebSocket, to: WebSocket, data: RawData, isBinary: boolean) {
   to.send(data, { binary: isBinary }, () => {
     if (from.isPaused && to.bufferedAmount < MAX_BUFFERED_BYTES) from.resume();
   });
   if (to.bufferedAmount >= MAX_BUFFERED_BYTES) from.pause();
 }
 
-function byteLength(data: import('ws').RawData) {
+function byteLength(data: RawData) {
   if (Array.isArray(data)) return data.reduce((total, chunk) => total + chunk.byteLength, 0);
   return data.byteLength;
 }

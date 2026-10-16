@@ -5,6 +5,13 @@ node_modules/
 dist/
 .next/
 
-# Test Results
-tests/.report/
-tests/.results/
+# Coverage
+.coverage/
+
+# Integration Fixtures
+tests/integration/fixtures/*/.next*/
+tests/integration/fixtures/*/next-env.d.ts
+*.tsbuildinfo
+
+# Next.js writes this into apps it runs in development
+examples/*/AGENTS.md

@@ -2,44 +2,63 @@
  * Adapter interface for multi-instance WebSocket deployments. Enables message broadcasting across
  * multiple server instances via pub/sub.
  *
+ * Every room is a route pathname. next-ws subscribes an instance to a room when its first client
+ * connects there and unsubscribes it once its last client leaves. Messages are opaque strings,
+ * next-ws encodes and decodes them itself, so an adapter only has to move them around.
+ *
  * @example
  *   class RedisAdapter implements Adapter {
  *     private pub = new Redis(process.env.REDIS_URL);
  *     private sub = new Redis(process.env.REDIS_URL);
+ *     private handlers = new Map<string, (message: string) => void>();
  *
- *     async broadcast(room: string, message: unknown): Promise<void> {
- *       await this.pub.publish(room, JSON.stringify(message));
+ *     constructor() {
+ *       this.sub.on('message', (room, message) => this.handlers.get(room)?.(message));
  *     }
  *
- *     async onMessage(room: string, handler: (message: unknown) => void): Promise<void> {
- *       this.sub.subscribe(room);
- *       this.sub.on('message', (channel, msg) => {
- *         if (channel === room) handler(JSON.parse(msg));
- *       });
+ *     async broadcast(room: string, message: string) {
+ *       await this.pub.publish(room, message);
  *     }
  *
- *     async close(): Promise<void> {
+ *     async subscribe(room: string, handler: (message: string) => void) {
+ *       this.handlers.set(room, handler);
+ *       await this.sub.subscribe(room);
+ *     }
+ *
+ *     async unsubscribe(room: string) {
+ *       this.handlers.delete(room);
+ *       await this.sub.unsubscribe(room);
+ *     }
+ *
+ *     async close() {
  *       await Promise.all([this.pub.quit(), this.sub.quit()]);
  *     }
  *   }
  */
 export interface Adapter {
   /**
-   * Broadcast a message to all instances subscribed to the specified room.
+   * Publish a message to every instance subscribed to the room, including this one.
    *
-   * @param room Room identifier (typically the route pathname)
-   * @param message Message to broadcast (will be JSON stringified if needed)
+   * @param room Room identifier, the route pathname
+   * @param message Encoded message to deliver as is
    */
-  broadcast(room: string, message: unknown): Promise<void>;
+  broadcast(room: string, message: string): Promise<void> | void;
 
   /**
-   * Subscribe to messages for a specific room.
+   * Subscribe this instance to a room. Called once per room until it is unsubscribed.
    *
    * @param room Room identifier to subscribe to
-   * @param handler Callback invoked when messages arrive for this room
+   * @param handler Callback to invoke with each message published to the room
    */
-  onMessage(room: string, handler: (message: unknown) => void): void | Promise<void>;
+  subscribe(room: string, handler: (message: string) => void): Promise<void> | void;
 
-  /** Clean up adapter resources (close connections, unsubscribe, etc.) */
-  close(): Promise<void>;
+  /**
+   * Unsubscribe this instance from a room, after the last client here has left it.
+   *
+   * @param room Room identifier to unsubscribe from
+   */
+  unsubscribe(room: string): Promise<void> | void;
+
+  /** Clean up adapter resources, such as connections. */
+  close(): Promise<void> | void;
 }

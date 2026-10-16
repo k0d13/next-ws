@@ -13,10 +13,13 @@
     "next-ws": "workspace:^",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "ws": "^8.18.3"
+    "ws": "catalog:"
   },
   "devDependencies": {
+    "@types/node": "catalog:",
     "@types/react": "catalog:",
-    "@types/ws": "^8.18.1"
+    "@types/react-dom": "catalog:",
+    "@types/ws": "catalog:",
+    "typescript": "catalog:"
   }
 }

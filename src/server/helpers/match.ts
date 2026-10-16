@@ -1,5 +1,7 @@
 import type NextNodeServer from 'next/dist/server/next-server.js';
 
+const compiledPatterns = new Map<string, RegExp>();
+
 /**
  * Compiles a route pattern into a regular expression.
  *
@@ -7,12 +9,32 @@ import type NextNodeServer from 'next/dist/server/next-server.js';
  * @returns Regular expression
  */
 function compileRoutePattern(routePattern: string) {
+  const cached = compiledPatterns.get(routePattern);
+  if (cached) return cached;
+
   const escapedPattern = routePattern.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
   const paramRegex = escapedPattern
     .replace(/\\\[\\\[(?:\\\.){3}([a-z0-9_]+)\\\]\\\]/gi, '?(?<r_o_$1>.+)?') // [[...param]]
     .replace(/\\\[(?:\\\.){3}([a-z0-9_]+)\\\]/gi, '(?<r_$1>.+)') // [...param]
     .replace(/\\\[([a-z0-9_]+)\\\]/gi, '(?<$1>[^/]+)'); // [param]
-  return new RegExp(`^${paramRegex}$`);
+  const regex = new RegExp(`^${paramRegex}$`);
+
+  compiledPatterns.set(routePattern, regex);
+  return regex;
+}
+
+/**
+ * Decode a URI component, leaving it as is if it is malformed.
+ *
+ * @param value Encoded value
+ * @returns Decoded value
+ */
+function decode(value: string) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
 }
 
 /**
@@ -24,18 +46,17 @@ function compileRoutePattern(routePattern: string) {
  */
 function getRouteParams(routePattern: string, requestPathname: string) {
   const routeRegex = compileRoutePattern(routePattern);
-  const match = requestPathname.replace(/\/+$/, '').match(routeRegex);
+  // Trim trailing slashes, but leave the root path as `/`
+  const match = requestPathname.replace(/(.)\/+$/, '$1').match(routeRegex);
   if (!match) return null;
   if (!match.groups) return {};
 
   const params: Record<string, string | string[]> = {};
-  for (let [k, v] of Object.entries(match.groups)) {
-    if (k.startsWith('r_')) {
-      const optional = k.startsWith('r_o_');
-      k = k.slice(optional ? 4 : 2);
-      v = v?.split('/') as never;
-    }
-    if (v) Reflect.set(params, k, v);
+  for (const [key, value] of Object.entries(match.groups)) {
+    if (!value) continue;
+    if (key.startsWith('r_o_')) params[key.slice(4)] = value.split('/').map(decode);
+    else if (key.startsWith('r_')) params[key.slice(2)] = value.split('/').map(decode);
+    else params[key] = decode(value);
   }
   return params;
 }
@@ -63,7 +84,8 @@ export function findMatchingRoute(nextServer: NextNodeServer, requestPathname: s
 
   for (const [routePath, [filePath]] of sortedRoutes) {
     if (!filePath) continue;
-    const realPath = `${basePath}${routePath}`;
+    // The root route lives at the base path itself, not at the base path with a trailing slash
+    const realPath = routePath === '/' && basePath ? basePath : `${basePath}${routePath}`;
     const routeParams = getRouteParams(realPath, requestPathname);
     if (routeParams) {
       return { filename: filePath, params: routeParams };
