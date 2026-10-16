@@ -91,8 +91,8 @@ export const patchNextTypesPlugin = definePatchStep({
   async transform(code) {
     const id = 'upgrade-method';
     code = restore(code, id)
-      // Put back what next-ws 2 added
-      .replace(/\[\s*\.\.\.([\w$.]*HTTP_METHODS),\s*'UPGRADE'\s*\]/, '$1');
+      // Put back what next-ws 2 added, which wrote the method with double quotes
+      .replace(/\[\s*\.\.\.([\w$.]*HTTP_METHODS),\s*(['"])UPGRADE\2\s*\]/, '$1');
 
     const methods = findAll(
       parseScript(code),

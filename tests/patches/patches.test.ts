@@ -176,7 +176,7 @@ describe(`upgrading next@${legacyVersion} patched by next-ws 2`, () => {
       const fresh = await step.transform(original);
       expect(upgraded).not.toMatch(/@patch |\/\/ socket\.end\(\)/);
       // The old patch is gone rather than patched again
-      for (const marker of [/\/\*next-ws:begin /g, /'UPGRADE'/g, /setupWebSocketServer/g])
+      for (const marker of [/\/\*next-ws:begin /g, /['"]UPGRADE['"]/g, /setupWebSocketServer/g])
         expect(upgraded.match(marker)?.length, String(marker)).toBe(fresh.match(marker)?.length);
       expect(compiles(upgraded)).toBe(true);
     },
