@@ -1,4 +1,4 @@
-import minimist from 'minimist';
+import { parseArgs } from 'node:util';
 import { version } from '../../../package.json';
 
 export interface Definition {
@@ -13,7 +13,7 @@ export interface CommandGroupDefinition extends Definition {
 }
 
 export interface CommandGroup extends CommandGroupDefinition {
-  parse(parents: CommandGroup[], argv: string[]): void;
+  parse(parents: CommandGroup[], argv: string[]): Promise<void> | void;
 }
 
 /**
@@ -26,12 +26,15 @@ export function defineCommandGroup(definition: CommandGroupDefinition): CommandG
   return {
     ...definition,
     parse(parents: CommandGroup[], argv: string[]) {
-      const parsed = minimist(argv);
-      for (const child of this.children)
-        if (parsed._[0] === child.name)
-          return void child.parse(parents.concat(this), argv.slice(1));
-      if (parsed.help) return void console.log(buildCommandGroupHelp(parents, this));
-      if (parsed.v || parsed.version) return void console.log(version);
+      const child = this.children.find((c) => c.name === argv[0]);
+      if (child) return child.parse(parents.concat(this), argv.slice(1));
+      const { values } = parseArgs({
+        args: argv,
+        options: { help: { type: 'boolean' }, version: { type: 'boolean', short: 'v' } },
+        allowPositionals: true,
+        strict: false,
+      });
+      if (values.version && !values.help) return void console.log(version);
       return void console.log(buildCommandGroupHelp(parents, this));
     },
   };
@@ -68,7 +71,7 @@ export interface CommandDefinition<TOptions extends OptionDefinition[]> extends 
 export interface Command<
   TOptions extends OptionDefinition[] = OptionDefinition[],
 > extends CommandDefinition<TOptions> {
-  parse(parents: CommandGroup[], argv: string[]): void;
+  parse(parents: CommandGroup[], argv: string[]): Promise<void> | void;
 }
 
 /**
@@ -83,12 +86,20 @@ export function defineCommand<const TOptions extends OptionDefinition[]>(
   return {
     ...definition,
     parse(parents: CommandGroup[], argv: string[]) {
-      const parsed = minimist(argv, {
-        boolean: ['help', ...this.options.map((o) => o.name)],
-        alias: Object.fromEntries(this.options.map((o) => [o.name, o.alias ?? []])),
+      const { values } = parseArgs({
+        args: argv,
+        options: Object.fromEntries([
+          ['help', { type: 'boolean' }],
+          ...this.options.map((o) => [o.name, { type: 'boolean', short: o.alias }]),
+        ]),
+        allowPositionals: true,
+        strict: false,
       });
-      if (parsed.help) return void console.log(buildCommandHelp(parents, this));
-      return this.action(parsed as never);
+      if (values.help) return void console.log(buildCommandHelp(parents, this));
+      const options = Object.fromEntries(
+        this.options.map((o) => [o.name, values[o.name] === true]),
+      );
+      return this.action(options as never);
     },
   };
 }
@@ -114,10 +125,10 @@ Options:
 // ===== Option ===== //
 
 export interface OptionDefinition extends Definition {
-  alias?: string | string[];
+  /** Single letter short form, such as `y` for `-y`. */
+  alias?: string;
 }
 
 function formatOption(option: OptionDefinition) {
-  const aliases = [option.alias ?? []].flat().map((a) => `-${a}`);
-  return [`--${option.name}`, ...aliases].join(', ');
+  return [`--${option.name}`, ...(option.alias ? [`-${option.alias}`] : [])].join(', ');
 }

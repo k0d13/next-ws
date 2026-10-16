@@ -60,6 +60,13 @@ describe.each(modes)('app router (%s)', (mode) => {
       await Promise.all([a.close(), b.close()]);
     });
 
+    it('keeps messages sent before the handler listens', async () => {
+      const client = await connect(server.wsUrl('/api/delayed'));
+      client.send('hello');
+      expect(await client.next()).toBe('late hello');
+      await client.close();
+    });
+
     it('still serves plain HTTP requests to the same route', async () => {
       const response = await fetch(server.url('/api/echo'));
       expect(response.status).toBe(426);

@@ -30,7 +30,7 @@
 
 ## 📦 Installation
 
-next-ws supports Next.js 15 and later.
+next-ws supports Next.js 15 and 16, on Node.js 20.9 or later.
 
 To set up a WebSocket server with `next-ws`, you need to patch your local Next.js installation. `next-ws` simplifies this process by providing a CLI command that handles the patching for you. Follow these steps to get started:
 
@@ -57,19 +57,19 @@ To set up a WebSocket server with `next-ws`, you need to patch your local Next.j
 Handle WebSocket connections in any route file in the app directory by exporting an `UPGRADE` function. It runs once for each new connection.
 
 ```ts
-// app/api/ws/route.ts
+// app/api/rooms/[room]/route.ts
 
-import type { RouteContext } from 'next-ws/server';
 import type { NextRequest } from 'next/server';
 import type { WebSocket, WebSocketServer } from 'ws';
 
-export function UPGRADE(
+export async function UPGRADE(
   client: WebSocket,
   server: WebSocketServer,
   request: NextRequest,
-  context: RouteContext<'/api/ws'>,
+  context: RouteContext<'/api/rooms/[room]'>,
 ) {
-  client.on('message', (message) => client.send(message));
+  const { room } = await context.params;
+  client.on('message', (message) => client.send(`${room}: ${message}`));
 }
 ```
 
@@ -80,7 +80,11 @@ export function UPGRADE(
 | `request` | The upgrade request as a `NextRequest`, with its URL, headers and cookies.                  |
 | `context` | Route parameters in `context.params`, such as `{ room: 'general' }` for `/rooms/[room]/ws`. |
 
-Requests to a path without a matching route, or to a route without `UPGRADE`, are refused with a `404`. If `UPGRADE` throws, the connection is closed with code `1011`.
+`context` has the same shape as for any route handler, so the global `RouteContext` type Next.js generates (Next.js 15.5 and later) fits it, and `params` is a promise to `await`. On older versions, import `RouteContext` from `next-ws/server` instead. For code written for next-ws 2, the parameters can still be read straight off `context.params` without awaiting.
+
+`UPGRADE` can `await` before it listens for messages, such as to check a session. Messages the client sends in the meantime are held until it adds a `message` listener or returns, rather than lost.
+
+Requests to a path without a matching route, or to a route without `UPGRADE`, are refused with a `404`. With a custom server, upgrades to paths that are not routes are left for its own `upgrade` listeners instead. If `UPGRADE` throws, the connection is closed with code `1011`.
 
 ### Headers and cookies
 
@@ -96,17 +100,52 @@ export async function UPGRADE(client: WebSocket) {
 }
 ```
 
-### Sending from anywhere on the server
+### Rooms and sending from anywhere on the server
 
-Server actions and route handlers run in the same process as the WebSocket server, so they can reach connected clients with `getWebSocketServer()`:
+Put clients in rooms with `join()`, and send to everyone in a room with `broadcast()`. Clients leave every room when they close. Server actions and route handlers run in the same process as the WebSocket server, so they can broadcast too:
 
 ```ts
+// app/api/rooms/[room]/route.ts
+import { broadcast, join } from 'next-ws/server';
+
+export async function UPGRADE(client: WebSocket, server: WebSocketServer, request: NextRequest) {
+  const room = request.nextUrl.pathname;
+  await join(client, room);
+  // Send every message on to the rest of the room
+  client.on('message', (data) => broadcast(room, data.toString(), { except: client }));
+}
+```
+
+```ts
+// app/actions.ts
 'use server';
 
-import { getWebSocketServer } from 'next-ws/server';
+import { broadcast } from 'next-ws/server';
 
 export async function announce(text: string) {
-  for (const client of getWebSocketServer()?.clients ?? []) client.send(text);
+  await broadcast('/api/rooms/general', text);
+}
+```
+
+| Function                             | What it does                                                                     |
+| ------------------------------------ | -------------------------------------------------------------------------------- |
+| `join(client, room)`                 | Adds a client to a room. Join only once a client is allowed in.                  |
+| `leave(client, room)`                | Removes a client from a room.                                                    |
+| `broadcast(room, data, { except }?)` | Sends to every client in a room, on every instance with an adapter.              |
+| `getClients(room)`                   | Lists the clients in a room on this instance.                                    |
+| `getWebSocketServer()`               | The `WebSocketServer` itself, whose `clients` are every connection on any route. |
+
+### Configuring the WebSocket server
+
+next-ws creates a `WebSocketServer` with the defaults of `ws`, which accept messages of up to 100 MiB. To change its options, set your own in `instrumentation.ts`, which Next.js runs before next-ws accepts any connection:
+
+```ts
+// instrumentation.ts
+export async function register() {
+  if (process.env.NEXT_RUNTIME !== 'nodejs') return;
+  const { setWebSocketServer } = await import('next-ws/server');
+  const { WebSocketServer } = await import('ws');
+  setWebSocketServer(new WebSocketServer({ noServer: true, maxPayload: 1024 * 1024 }));
 }
 ```
 
@@ -135,7 +174,19 @@ httpServer.on('request', app.getRequestHandler()).listen(3000);
 
 ### Running several instances
 
-Clients connected to different servers cannot see each other. An adapter connects the servers through a message broker, such as Redis pub/sub. Set one with `setAdapter()` in a custom server, and every message a client sends then reaches the other clients on the same route, on every instance, without the sender getting it back.
+Clients connected to different servers cannot see each other. An adapter connects the servers through a message broker, such as Redis pub/sub, so that `broadcast()` reaches a room's clients on every instance. Set one with `setAdapter()` in `instrumentation.ts`, or in a custom server before Next.js starts:
+
+```ts
+// instrumentation.ts
+export async function register() {
+  if (process.env.NEXT_RUNTIME !== 'nodejs') return;
+  const { setAdapter } = await import('next-ws/server');
+  const { RedisAdapter } = await import('./lib/redis-adapter');
+  setAdapter(new RedisAdapter(process.env.REDIS_URL));
+}
+```
+
+The adapter only carries what you `broadcast()`. next-ws subscribes an instance to a room when its first local client joins, and unsubscribes when the last one leaves.
 
 An adapter implements four methods, and only ever handles strings:
 

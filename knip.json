@@ -9,7 +9,12 @@
     ".": {},
     "examples/*": {},
     "tests/integration": {
-      "entry": ["fixtures/*/server.mjs", "fixtures/*/next.config.mjs", "fixtures/*/app/**/route.js"]
+      "entry": [
+        "fixtures/*/server.mjs",
+        "fixtures/*/instrumentation.js",
+        "fixtures/*/next.config.mjs",
+        "fixtures/*/app/**/route.js"
+      ]
     }
   }
 }

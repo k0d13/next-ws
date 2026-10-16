@@ -2,34 +2,19 @@
 ===================================================================
 --- a/dist/server/lib/router-server.js
 +++ b/dist/server/lib/router-server.js
-@@ -523,7 +523,7 @@
-         dev: !!opts.dev,
-         server: opts.server,
-         serverFields: {
--            ...(developmentBundler == null ? void 0 : developmentBundler.serverFields) || {},
-+            ...((developmentBundler == null ? void 0 : developmentBundler.serverFields) || {}),
-             setIsrStatus: devBundlerService == null ? void 0 : devBundlerService.setIsrStatus.bind(devBundlerService)
-         },
-         experimentalTestProxy: !!config.experimental.testProxy,
-@@ -622,13 +622,19 @@
+@@ -622,13 +622,13 @@
              // TODO: allow upgrade requests to pages/app paths?
              // this was not previously supported
              if (matchedOutput) {
 -                return socket.end();
-+                return (
-+                    // socket.end()
-+                    (void 0)
-+                );
++                return /*next-ws:begin keep-socket-open "socket.end()"*/void 0/*next-ws:end keep-socket-open*/;
              }
              if (finished && parsedUrl.protocol) {
                  if (!statusCode) {
                      return await (0, _proxyrequest.proxyRequest)(req, socket, parsedUrl, head);
                  }
 -                return socket.end();
-+                return (
-+                    // socket.end()
-+                    (void 0)
-+                );
++                return /*next-ws:begin keep-socket-open "socket.end()"*/void 0/*next-ws:end keep-socket-open*/;
              }
          // If there's no matched output, we don't handle the request as user's
          // custom WS server may be listening on the same path.

@@ -4,9 +4,10 @@ Live reactions shared between two Next.js servers through Redis.
 
 Behind a load balancer, two people in the same room can land on different servers. An adapter connects the servers, so a message sent on one reaches clients on all of them.
 
-- **An adapter in about 30 lines.** [`lib/redis-adapter.ts`](lib/redis-adapter.ts) implements the `Adapter` interface from `next-ws/server` on Redis pub/sub. Each room, which is a route pathname, becomes a channel.
-- **Set it once.** [`server.ts`](server.ts) passes the adapter to `setAdapter()` before Next.js starts. From then on, every message a client sends reaches the other clients in its room, on every instance. The sender does not get its own message back.
-- **Nothing in the route.** [`app/api/reactions/route.ts`](app/api/reactions/route.ts) only says hello, because the adapter does the relaying.
+- **An adapter in about 30 lines.** [`lib/redis-adapter.ts`](lib/redis-adapter.ts) implements the `Adapter` interface from `next-ws/server` on Redis pub/sub. Each room becomes a channel.
+- **Set it once.** [`instrumentation.ts`](instrumentation.ts) passes the adapter to `setAdapter()` when each instance starts, before it accepts connections.
+- **Rooms in the route.** [`app/api/reactions/route.ts`](app/api/reactions/route.ts) adds each client to a room with `join()`, checks every reaction, and sends it on with `broadcast()`, leaving out the sender. With the adapter, that reaches the room's clients on every instance.
+- **Two instances on one machine.** [`server.ts`](server.ts) is a small custom server that gives each development instance its own port and build directory.
 
 ## Running it
 

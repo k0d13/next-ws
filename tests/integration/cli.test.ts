@@ -69,11 +69,13 @@ describe('patch', () => {
     const result = run('patch');
     expect(result.status).toBe(0);
     expect(result.output).toContain(`Patching Next.js v${nextVersion}`);
-    expect(await readNext('dist/server/next-server.js')).toContain(
-      '@patch attach-websocket-server',
+    expect(await readNext('dist/server/next-server.js')).toContain('/*next-ws:begin setup');
+    expect(await readNext('dist/server/request/headers.js')).toContain(
+      '/*next-ws:begin request-headers',
     );
-    expect(await readNext('dist/server/request/headers.js')).toContain('@patch headers');
-    expect(await readNext('dist/server/request/cookies.js')).toContain('@patch cookies');
+    expect(await readNext('dist/server/request/cookies.js')).toContain(
+      '/*next-ws:begin request-cookies',
+    );
   });
 
   it('writes a trace of what it patched', async () => {
@@ -99,10 +101,8 @@ describe('patch', () => {
     await setNextVersion('99.0.0');
     const result = run('patch', flag);
     expect(result.status).toBe(0);
-    expect(result.output).toContain('is not officially supported');
-    expect(await readNext('dist/server/next-server.js')).toContain(
-      '@patch attach-websocket-server',
-    );
+    expect(result.output).toContain('is not supported yet');
+    expect(await readNext('dist/server/next-server.js')).toContain('/*next-ws:begin setup');
   });
 
   it('aborts a newer version when there is no terminal to confirm in', async () => {
@@ -110,7 +110,18 @@ describe('patch', () => {
     const result = run('patch');
     expect(result.timedOut).toBe(false);
     expect(result.status).toBe(1);
-    expect(await readNext('dist/server/next-server.js')).not.toContain('@patch');
+    expect(await readNext('dist/server/next-server.js')).not.toContain('next-ws:begin');
+  });
+
+  it('fails without changing anything when a step cannot find its target', async () => {
+    const before = await Promise.all(nextFiles.map(readNext));
+    const path = join(nextDirectory, 'dist/server/lib/router-server.js');
+    await writeFile(path, '// Nothing to patch here\n');
+    const result = run('patch');
+    expect(result.status).toBe(1);
+    expect(result.output).toContain("Could not find 'return socket.end()'");
+    // The steps before it did not write their files either
+    expect(await readNext('dist/server/next-server.js')).toBe(before[0]);
   });
 
   it('prints help', () => {
@@ -155,9 +166,7 @@ describe('verify', () => {
   it.each([['--ensure'], ['-e']])('patches when not patched with %s', async (flag) => {
     const result = run('verify', flag);
     expect(result.status).toBe(0);
-    expect(await readNext('dist/server/next-server.js')).toContain(
-      '@patch attach-websocket-server',
-    );
+    expect(await readNext('dist/server/next-server.js')).toContain('/*next-ws:begin setup');
   });
 });
 

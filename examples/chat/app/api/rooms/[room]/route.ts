@@ -1,4 +1,3 @@
-import type { RouteContext } from 'next-ws/server';
 import { cookies } from 'next/headers';
 import type { NextRequest } from 'next/server';
 import type { WebSocket, WebSocketServer } from 'ws';
@@ -17,6 +16,7 @@ export async function UPGRADE(
   client: WebSocket,
   _server: WebSocketServer,
   _request: NextRequest,
+  // The same RouteContext type Next.js generates for every route handler
   { params }: RouteContext<'/api/rooms/[room]'>,
 ) {
   // The browser sends cookies with the upgrade request, so the session works just like it
@@ -24,7 +24,7 @@ export async function UPGRADE(
   const name = normaliseName((await cookies()).get(NAME_COOKIE)?.value);
   if (!name) return client.close(1008, 'Sign in first');
 
-  const roomName = normaliseRoom(params.room);
+  const roomName = normaliseRoom((await params).room);
   if (!roomName) return client.close(1008, 'Unknown room');
 
   const room = getRoom(roomName);

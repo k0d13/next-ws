@@ -1,4 +1,6 @@
+import * as logger from 'next/dist/build/output/log.js';
 import type { Adapter } from './helpers/adapter.js';
+import type { Rooms } from './helpers/rooms.js';
 import type { RequestStorage } from './helpers/store.js';
 
 function useGlobal<T>(key: PropertyKey) {
@@ -29,11 +31,11 @@ export {
   /**
    * Get the HTTP server instance.
    *
-   * @returns Existing HTTP server instance if even
+   * @returns Existing HTTP server instance if set
    */
   getHttpServer,
   /**
-   * Set the HTTP server instance.
+   * Set the HTTP server instance, for a custom server. Call it before Next.js starts.
    *
    * @param value HTTP server instance
    */
@@ -58,13 +60,14 @@ export {
   /**
    * Get the WebSocket server instance.
    *
-   * @returns Existing WebSocket server instance if even
+   * @returns Existing WebSocket server instance if one has been set or created
    */
   getWebSocketServer,
   /**
-   * Set the WebSocket server instance.
+   * Set the WebSocket server instance, such as one with a lower `maxPayload`. Call it before the
+   * first connection, in a custom server or in `register()` of `instrumentation.ts`.
    *
-   * @param value WebSocket server instance
+   * @param value WebSocket server instance, created with `noServer: true`
    */
   setWebSocketServer,
   /**
@@ -105,12 +108,41 @@ export {
   useRequestStorage,
 };
 
+// ===== Rooms ===== //
+
+const [getRooms, , useRooms] = //
+  useGlobal<Rooms>(
+    Symbol.for('next-ws.rooms'), //
+  );
+
+export {
+  /**
+   * Get or create the rooms every copy of next-ws shares.
+   *
+   * @param getter Function to create the rooms
+   * @returns Existing or created rooms
+   */
+  useRooms,
+};
+
 // ===== Adapter ===== //
 
-const [getAdapter, setAdapter, useAdapter] = //
+const [getAdapter, setAdapterValue] = //
   useGlobal<Adapter | undefined>(
     Symbol.for('next-ws.adapter'), //
   );
+
+/**
+ * Set the adapter that connects rooms across instances. Call it before the first client joins a
+ * room, in a custom server or in `register()` of `instrumentation.ts`.
+ *
+ * @param value Adapter instance
+ */
+function setAdapter(value: Adapter | undefined) {
+  if (getRooms())
+    logger.warn('[next-ws] setAdapter() was called after rooms were first used, it has no effect');
+  return setAdapterValue(value);
+}
 
 export {
   /**
@@ -119,17 +151,5 @@ export {
    * @returns Existing adapter instance if set
    */
   getAdapter,
-  /**
-   * Set the adapter instance.
-   *
-   * @param value Adapter instance
-   */
   setAdapter,
-  /**
-   * Get or set the adapter instance.
-   *
-   * @param getter Function to get the adapter instance
-   * @returns Existing or created adapter instance
-   */
-  useAdapter,
 };

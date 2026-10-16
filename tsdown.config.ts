@@ -15,5 +15,9 @@ export default defineConfig([
     platform: 'node',
     dts: false,
     clean: false,
+    // The CLI ships with everything it needs, so installing next-ws pulls in no dependencies
+    deps: {
+      onlyBundle: ['acorn', 'magic-string', '@jridgewell/sourcemap-codec', 'semver', 'chalk'],
+    },
   },
 ]);

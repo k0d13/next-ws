@@ -1,4 +1,6 @@
+import { join } from 'next-ws/server';
 import type { WebSocket } from 'ws';
+import { DASHBOARD_ROOM } from '@/lib/events';
 import { watch } from '@/lib/sampler';
 
 export function GET() {
@@ -8,6 +10,8 @@ export function GET() {
   });
 }
 
-export function UPGRADE(client: WebSocket) {
+export async function UPGRADE(client: WebSocket) {
+  // Announcements are broadcast to this room, see app/actions.ts
+  await join(client, DASHBOARD_ROOM);
   watch(client);
 }

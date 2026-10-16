@@ -1,4 +1,3 @@
-import type { RouteContext } from 'next-ws/server';
 import type { NextRequest } from 'next/server';
 import type { WebSocket, WebSocketServer } from 'ws';
 
@@ -11,13 +10,13 @@ export function GET() {
   });
 }
 
-export function UPGRADE(
+export async function UPGRADE(
   client: WebSocket,
   _server: WebSocketServer,
   _request: NextRequest,
   context: RouteContext<'/api/upstream/[...path]'>,
 ) {
-  const path = context.params.path.join('/');
+  const path = (await context.params).path.join('/');
   client.send(`Connected to upstream at /${path}`);
   client.on('message', (data) => client.send(`Echo: ${data}`));
 }

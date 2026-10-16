@@ -1,8 +1,8 @@
 'use server';
 
 import { randomUUID } from 'node:crypto';
-import { getWebSocketServer } from 'next-ws/server';
-import type { DashboardEvent } from '@/lib/events';
+import { broadcast, getClients } from 'next-ws/server';
+import { DASHBOARD_ROOM, type DashboardEvent } from '@/lib/events';
 
 export interface AnnounceState {
   error?: string;
@@ -11,7 +11,7 @@ export interface AnnounceState {
 
 /**
  * Push an announcement to every open dashboard. Server actions and route handlers run in the same
- * process as the WebSocket server, so they can reach its clients directly.
+ * process as the WebSocket server, so they can broadcast to a room directly.
  */
 export async function announce(_: AnnounceState, formData: FormData): Promise<AnnounceState> {
   const text = String(formData.get('text') ?? '')
@@ -23,13 +23,7 @@ export async function announce(_: AnnounceState, formData: FormData): Promise<An
     type: 'announcement',
     announcement: { id: randomUUID(), text, at: Date.now() },
   };
-  const message = JSON.stringify(event);
-
-  let sentTo = 0;
-  for (const client of getWebSocketServer()?.clients ?? []) {
-    if (client.readyState !== client.OPEN) continue;
-    client.send(message);
-    sentTo++;
-  }
+  const sentTo = getClients(DASHBOARD_ROOM).length;
+  await broadcast(DASHBOARD_ROOM, JSON.stringify(event));
   return { sentTo };
 }

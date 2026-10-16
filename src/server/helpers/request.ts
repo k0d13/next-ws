@@ -13,7 +13,8 @@ export function toNextRequest(message: IncomingMessage) {
   const protocol = 'encrypted' in message.socket ? 'https' : 'http';
   const url = `${protocol}://${headers.get('host')}${message.url}`;
 
-  message.once('aborted', () => controller.abort());
+  // Aborts once the connection closes, so a handler can cancel work for a client that has gone
+  message.socket.once('close', () => controller.abort());
 
   return new NextRequest(url, {
     method: message.method,

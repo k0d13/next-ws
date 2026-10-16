@@ -18,6 +18,12 @@ describe.each(modes)('custom server (%s)', (mode) => {
     await client.close();
   });
 
+  it('leaves upgrades the custom server handles itself', async () => {
+    const client = await connect(server.wsUrl('/own'));
+    expect(await client.next()).toBe('own');
+    await client.close();
+  });
+
   it('still serves requests the custom server handles itself', async () => {
     const response = await fetch(server.url('/health'));
     expect(await response.text()).toBe('ok');

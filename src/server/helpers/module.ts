@@ -11,11 +11,14 @@ import type { UpgradeHandler } from './socket.js';
  * @returns Route module if existing
  */
 export async function importRouteModule(nextServer: NextNodeServer, filePathname: string) {
-  try {
-    // Compiles the route in development, and throws in production where it is already built
-    // @ts-expect-error - ensurePage is protected
-    await nextServer.ensurePage({ page: filePathname, clientOnly: false });
-  } catch {}
+  // @ts-expect-error - serverOptions is protected
+  if (nextServer.serverOptions?.dev) {
+    try {
+      // Compiles the route, production servers only have built routes and throw
+      // @ts-expect-error - ensurePage is protected
+      await nextServer.ensurePage({ page: filePathname, clientOnly: false });
+    } catch {}
+  }
 
   try {
     // @ts-expect-error - getPagePath is protected
@@ -50,7 +53,27 @@ export type RouteParams<Pattern extends string> =
         : // oxlint-disable-next-line typescript/no-empty-object-type
           {};
 
-/** Route context object containing the parameters. */
+/**
+ * Route context object containing the parameters. Like Next.js, `params` is a promise, so the
+ * `RouteContext` type Next.js generates fits it too, and its values can also be read directly.
+ */
 export type RouteContext<Path extends string> = {
-  params: Record<string, string | string[] | undefined> & RouteParams<Path>;
+  params: Promise<RouteParamsOf<Path>> & RouteParamsOf<Path>;
 };
+
+type RouteParamsOf<Path extends string> = Record<string, string | string[] | undefined> &
+  RouteParams<Path>;
+
+/**
+ * Create the params for a route context, a promise that also carries the values as properties.
+ *
+ * @param params Route parameters
+ * @returns Params usable with `await` and without it
+ */
+export function createParams<Params extends Record<string, string | string[]>>(params: Params) {
+  const promise = Promise.resolve(params);
+  // Never shadow the promise's own methods, a route with a `[then]` segment would break `await`
+  for (const [key, value] of Object.entries(params))
+    if (!(key in promise)) Reflect.set(promise, key, value);
+  return promise as unknown as Promise<Params> & Params;
+}

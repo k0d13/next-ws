@@ -2,18 +2,17 @@
 ===================================================================
 --- a/dist/server/request/headers.js
 +++ b/dist/server/request/headers.js
-@@ -19,6 +19,14 @@
+@@ -18,7 +18,12 @@
+ const _utils = require("./utils");
  const _invarianterror = require("../../shared/lib/invariant-error");
  const _reflect = require("../web/spec-extension/adapters/reflect");
- function headers() {
-+    {
-+        // @patch headers
-+        const kRequestStorage = Symbol.for('next-ws.request-store');
-+        const requestStorage = Reflect.get(globalThis, kRequestStorage);
-+        const contextualHeaders = requestStorage?.getStore()?.headers;
-+        if (contextualHeaders) return contextualHeaders;
-+    }
-+
+-function headers() {
++function headers() {/*next-ws:begin request-headers ""*/
++{
++  const store = globalThis[Symbol.for('next-ws.request-store')]?.getStore();
++  if (store) return Promise.resolve(store.headers);
++}
++/*next-ws:end request-headers*/
      const callingExpression = 'headers';
      const workStore = _workasyncstorageexternal.workAsyncStorage.getStore();
      const workUnitStore = _workunitasyncstorageexternal.workUnitAsyncStorage.getStore();

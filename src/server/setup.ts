@@ -1,53 +1,60 @@
 import { AsyncLocalStorage, AsyncResource } from 'node:async_hooks';
 import { type IncomingMessage, STATUS_CODES } from 'node:http';
 import type { Duplex } from 'node:stream';
+import { debuglog } from 'node:util';
 import * as logger from 'next/dist/build/output/log.js';
 import type NextNodeServer from 'next/dist/server/next-server.js';
-import { WebSocketServer } from 'ws';
-import type { Adapter } from './helpers/adapter.js';
+import { type RawData, type WebSocket, WebSocketServer } from 'ws';
 import { findMatchingRoute } from './helpers/match.js';
-import { importRouteModule } from './helpers/module.js';
+import { createParams, importRouteModule } from './helpers/module.js';
 import { toNextRequest } from './helpers/request.js';
-import { Rooms } from './helpers/rooms.js';
 import { createRequestStore } from './helpers/store.js';
-import { useHttpServer, useRequestStorage, useWebSocketServer } from './persistent.js';
+import {
+  getAdapter,
+  getHttpServer,
+  useHttpServer,
+  useRequestStorage,
+  useWebSocketServer,
+} from './persistent.js';
 
-export interface SetupOptions {
-  adapter?: Adapter;
-}
+const debug = debuglog('next-ws');
+
+/** Most a client can send before its handler is ready, beyond which messages are dropped. */
+const maxHeldBytes = 1024 * 1024;
 
 /**
- * Attach the WebSocket server to the HTTP server.
+ * Attach the WebSocket server to the HTTP server. The patched Next.js server calls this.
  *
  * @param nextServer Next.js Node server instance
- * @param options Setup options including optional adapter
  */
-export function setupWebSocketServer(nextServer: NextNodeServer, options?: SetupOptions) {
+export function setupWebSocketServer(nextServer: NextNodeServer) {
+  // A server set before Next.js started belongs to a custom server, which may handle some upgrades
+  // itself
+  const customServer = getHttpServer() !== undefined;
   const httpServer = //
     // @ts-expect-error - serverOptions is protected
     useHttpServer(() => nextServer.serverOptions?.httpServer);
   if (!httpServer) return logger.error('[next-ws] was not able to find the HTTP server');
-  const wsServer = //
-    useWebSocketServer(() => new WebSocketServer({ noServer: true }));
-  const requestStorage = //
-    useRequestStorage(() => new AsyncLocalStorage());
-  const adapter = options?.adapter;
-  // @ts-expect-error - serverOptions is protected
-  const basePath: string = nextServer.serverOptions?.conf.basePath || '';
 
   // Prevent double-attaching
   const kAttached = Symbol.for('next-ws.http-server.attached');
   if (Reflect.has(httpServer, kAttached)) return;
   Reflect.set(httpServer, kAttached, true);
 
-  if (adapter) logger.ready('[next-ws] has started the WebSocket server with an adapter');
-  else logger.ready('[next-ws] has started the WebSocket server');
+  const requestStorage = //
+    useRequestStorage(() => new AsyncLocalStorage());
+  // @ts-expect-error - serverOptions is protected
+  const basePath: string = nextServer.serverOptions?.conf.basePath || '';
 
-  const rooms = adapter ? new Rooms(adapter) : undefined;
+  logger.ready('[next-ws] has started the WebSocket server');
 
   async function handleUpgrade(message: IncomingMessage, socket: Duplex, head: Buffer) {
     // Next.js handles its own sockets, such as HMR
     if (message.url?.startsWith(`${basePath}/_next/`)) return;
+
+    // Wait for Next.js to finish starting, which runs `instrumentation.ts` where an adapter or
+    // WebSocket server may be set
+    await nextServer.prepare();
 
     let request: ReturnType<typeof toNextRequest>;
     try {
@@ -60,7 +67,9 @@ export function setupWebSocketServer(nextServer: NextNodeServer, options?: Setup
 
     const route = findMatchingRoute(nextServer, pathname);
     if (!route) {
-      logger.error(`[next-ws] could not find route for page ${pathname}`);
+      // Next.js leaves these for a custom server's own upgrade listeners, and so does next-ws
+      if (customServer) return;
+      debug(`no route for upgrade to ${pathname}`);
       return rejectUpgrade(socket, 404);
     }
 
@@ -74,49 +83,36 @@ export function setupWebSocketServer(nextServer: NextNodeServer, options?: Setup
     // catch around this function turns into a 500
     const handler = module.userland.UPGRADE;
     if (typeof handler !== 'function') {
-      logger.error(`[next-ws] route '${pathname}' does not export an UPGRADE handler`);
+      debug(`route '${pathname}' does not export an UPGRADE handler`);
       return rejectUpgrade(socket, 404);
     }
 
+    const wsServer = //
+      useWebSocketServer(() => new WebSocketServer({ noServer: true }));
     wsServer.handleUpgrade(message, socket, head, (client) => {
       wsServer.emit('connection', client, message);
 
-      void requestStorage
-        .run(createRequestStore(request), async () => {
-          // Emit every event in this request's context, so `headers()` and `cookies()` keep
-          // working inside listeners the handler adds
-          client.emit = AsyncResource.bind(client.emit, 'next-ws.client', client);
+      void requestStorage.run(createRequestStore(request), () => {
+        // Emit every event in this request's context, so `headers()` and `cookies()` keep
+        // working inside listeners the handler adds
+        const release = holdMessages(
+          client,
+          AsyncResource.bind(client.emit, 'next-ws.client', client),
+        );
 
-          if (rooms) {
-            // Listen before joining, so a client that closes while the adapter subscribes still
-            // leaves and the room can empty out
-            client.once('close', () => {
-              rooms.leave(pathname, client).catch((cause: unknown) => {
-                logger.error(`[next-ws] adapter could not unsubscribe from '${pathname}'`, cause);
-              });
-            });
-            await rooms.join(pathname, client);
-            if (client.readyState !== client.OPEN) return;
-          }
-
-          await handler(client, wsServer, request, { params: route.params });
-
-          // Only forward once the handler has accepted the client, it may close clients that
-          // fail a session check after awaiting it
-          if (rooms && client.readyState === client.OPEN) {
-            client.on('message', (data, isBinary) => {
-              rooms.publish(pathname, client, data, isBinary).catch((cause: unknown) => {
-                logger.error(`[next-ws] adapter could not broadcast for '${pathname}'`, cause);
-              });
-            });
-          }
-        })
-        .catch((cause: unknown) => {
-          logger.error(`[next-ws] error in socket handler for '${pathname}'`, cause);
-          try {
-            client.close(1011, 'Internal Server Error');
-          } catch {}
-        });
+        return Promise.resolve()
+          .then(() => handler(client, wsServer, request, { params: createParams(route.params) }))
+          .then(
+            () => release(true),
+            (cause: unknown) => {
+              release(false);
+              logger.error(`[next-ws] error in socket handler for '${pathname}'`, cause);
+              try {
+                client.close(1011, 'Internal Server Error');
+              } catch {}
+            },
+          );
+      });
     });
   }
 
@@ -129,16 +125,54 @@ export function setupWebSocketServer(nextServer: NextNodeServer, options?: Setup
     });
   });
 
-  // Cleanup adapter on server close
-  if (adapter) {
-    httpServer.once('close', async () => {
-      try {
-        await adapter.close();
-      } catch (cause) {
-        logger.error('[next-ws] adapter cleanup failed:', cause);
-      }
-    });
-  }
+  // Clean up the adapter, wherever it was set, once the server closes
+  httpServer.once('close', async () => {
+    try {
+      await getAdapter()?.close();
+    } catch (cause) {
+      logger.error('[next-ws] adapter cleanup failed:', cause);
+    }
+  });
+}
+
+/**
+ * Hold the messages a client sends while nothing listens for them, until the handler adds a
+ * `message` listener or settles, so a handler can await before it starts listening.
+ *
+ * @param client WebSocket client
+ * @param emit Emit function to deliver events with
+ * @returns Function that stops holding, delivering or dropping what was held
+ */
+function holdMessages(client: WebSocket, emit: WebSocket['emit']) {
+  let held: [RawData, boolean][] | undefined = [];
+  let heldBytes = 0;
+
+  const release = (deliver: boolean) => {
+    const messages = held;
+    held = undefined;
+    client.off('newListener', onListener);
+    if (deliver) for (const args of messages ?? []) emit.call(client, 'message', ...args);
+  };
+  // Deliver once the listener has been added, after the handler's synchronous code has run
+  const onListener = (event: string | symbol) => {
+    if (event === 'message') queueMicrotask(() => release(true));
+  };
+  client.on('newListener', onListener);
+
+  client.emit = function (event: string | symbol, ...args: unknown[]) {
+    if (held && event === 'message' && client.listenerCount('message') === 0) {
+      const [data, isBinary] = args as [RawData, boolean];
+      heldBytes += Array.isArray(data)
+        ? data.reduce((n, b) => n + b.byteLength, 0)
+        : data.byteLength;
+      if (heldBytes <= maxHeldBytes) held.push([data, isBinary]);
+      else debug('dropped a message sent before the UPGRADE handler was ready');
+      return true;
+    }
+    return emit.call(client, event, ...args);
+  };
+
+  return release;
 }
 
 /**

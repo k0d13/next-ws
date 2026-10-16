@@ -2,9 +2,10 @@
  * Adapter interface for multi-instance WebSocket deployments. Enables message broadcasting across
  * multiple server instances via pub/sub.
  *
- * Every room is a route pathname. next-ws subscribes an instance to a room when its first client
- * connects there and unsubscribes it once its last client leaves. Messages are opaque strings,
- * next-ws encodes and decodes them itself, so an adapter only has to move them around.
+ * Rooms are whatever names clients `join()`. next-ws subscribes an instance to a room when its
+ * first local client joins and unsubscribes it once its last one leaves, and carries what
+ * `broadcast()` sends. Messages are opaque strings, next-ws encodes and decodes them itself, so an
+ * adapter only has to move them around.
  *
  * @example
  *   class RedisAdapter implements Adapter {
@@ -39,7 +40,7 @@ export interface Adapter {
   /**
    * Publish a message to every instance subscribed to the room, including this one.
    *
-   * @param room Room identifier, the route pathname
+   * @param room Room identifier
    * @param message Encoded message to deliver as is
    */
   broadcast(room: string, message: string): Promise<void> | void;
