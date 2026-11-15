@@ -12,8 +12,6 @@ describe.each(modes)('app router (%s)', (mode) => {
   });
   afterAll(() => server?.stop());
 
-  // ===== Upgrade ===== //
-
   describe('upgrade', () => {
     it('echoes text messages', async () => {
       const client = await connect(server.wsUrl('/api/echo'));
@@ -94,8 +92,6 @@ describe.each(modes)('app router (%s)', (mode) => {
     });
   });
 
-  // ===== Parameters ===== //
-
   describe('parameters', () => {
     it('passes dynamic segments', async () => {
       const client = await connect(server.wsUrl('/api/params/42'));
@@ -134,8 +130,6 @@ describe.each(modes)('app router (%s)', (mode) => {
     });
   });
 
-  // ===== Request ===== //
-
   describe('request', () => {
     const options = { headers: { 'x-test': 'header-value', cookie: 'session=cookie-value' } };
 
@@ -172,8 +166,6 @@ describe.each(modes)('app router (%s)', (mode) => {
       await Promise.all([a.close(), b.close()]);
     });
   });
-
-  // ===== Rejection ===== //
 
   describe('rejection', () => {
     it('rejects a path with no route with 404', async () => {

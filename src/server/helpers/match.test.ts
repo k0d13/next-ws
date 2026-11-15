@@ -59,8 +59,6 @@ describe('findMatchingRoute', () => {
     expect(findMatchingRoute(server, '/api/v1x0')).toBeUndefined();
   });
 
-  // ===== Parameters ===== //
-
   describe('parameters', () => {
     it('extracts a dynamic segment', () => {
       const server = createServer(['/rooms/[room]/ws']);
@@ -111,8 +109,6 @@ describe('findMatchingRoute', () => {
     });
   });
 
-  // ===== Base Path ===== //
-
   describe('base path', () => {
     it('prefixes every route with the base path', () => {
       const server = createServer(['/api/ws'], { basePath: '/app' });
@@ -129,8 +125,6 @@ describe('findMatchingRoute', () => {
       expect(findMatchingRoute(server, '/app/rooms/general')?.params).toEqual({ room: 'general' });
     });
   });
-
-  // ===== Priority ===== //
 
   describe('priority', () => {
     it('prefers a static segment over a dynamic one', () => {
@@ -204,8 +198,6 @@ describe('findMatchingRoute', () => {
     findMatchingRoute(server, '/a');
     expect(reads).toBe(2);
   });
-
-  // ===== Root ===== //
 
   it('matches a root route', () => {
     const server = createServer(['/']);

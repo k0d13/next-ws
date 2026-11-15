@@ -41,12 +41,6 @@ interface StartOptions {
   env?: Record<string, string>;
 }
 
-/**
- * Build a fixture for production.
- *
- * @param fixture Fixture directory name
- * @param distDir Directory to build into
- */
 export function buildFixture(fixture: string, distDir: string) {
   const result = spawnSync(process.execPath, [nextBin, 'build'], {
     cwd: join(fixturesDirectory, fixture),
@@ -60,9 +54,6 @@ export function buildFixture(fixture: string, distDir: string) {
 /**
  * Start a fixture with `next dev`, `next start` or its own server script, and wait until it answers
  * HTTP requests.
- *
- * @param options What to start and how
- * @returns The running server
  */
 export async function startFixture(options: StartOptions): Promise<Server> {
   const port = await getFreePort();

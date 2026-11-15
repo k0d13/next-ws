@@ -28,12 +28,7 @@ export function failure(...message: unknown[]) {
   console.log(chalk.red('[next-ws]', '✖'), ...message);
 }
 
-/**
- * Show a confirmation prompt where the user can choose to confirm or deny.
- *
- * @param message The message to show
- * @returns A promise that resolves to a boolean indicating whether the user confirmed or denied
- */
+/** Ask a yes or no question, anything but `y` counts as no. */
 export async function confirm(...message: unknown[]) {
   // Nobody can answer without a terminal, such as in CI or a `prepare` script
   if (!process.stdin.isTTY) return false;
@@ -58,13 +53,7 @@ export async function confirm(...message: unknown[]) {
   });
 }
 
-/**
- * Show a loading spinner while a promise is running.
- *
- * @param promise The promise to run
- * @param message The message to show
- * @returns The result of the promise
- */
+/** Show a spinner until the promise settles, then a tick or a cross. */
 export async function task<T>(promise: Promise<T>, ...message: unknown[]) {
   // Hide the cursor
   process.stdout.write('\x1B[?25l');

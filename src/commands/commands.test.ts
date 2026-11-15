@@ -38,8 +38,6 @@ beforeEach(() => {
 });
 afterEach(() => void vi.clearAllMocks());
 
-// ===== Patch ===== //
-
 describe('patch', () => {
   it('applies the patch for a supported version', async () => {
     await patchCommand.action({ yes: false });
@@ -91,8 +89,6 @@ describe('patch', () => {
     expect(execute).toHaveBeenCalledOnce();
   });
 });
-
-// ===== Verify ===== //
 
 describe('verify', () => {
   const current = () => ({ patch: '>=15.0.0 <17.0.0', version: '16.0.0', nextWs: nextWsVersion });

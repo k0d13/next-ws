@@ -1,12 +1,6 @@
 import type { IncomingMessage } from 'node:http';
 import { NextRequest } from 'next/server.js';
 
-/**
- * Convert a Node.js HTTP incoming message instance to a Next.js request instance.
- *
- * @param message Node.js HTTP incoming message instance
- * @returns Next.js request instance
- */
 export function toNextRequest(message: IncomingMessage) {
   const controller = new AbortController();
   const headers = new Headers(message.headers as never);

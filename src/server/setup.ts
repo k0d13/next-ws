@@ -22,11 +22,7 @@ const debug = debuglog('next-ws');
 /** Most a client can send before its handler is ready, beyond which messages are dropped. */
 const maxHeldBytes = 1024 * 1024;
 
-/**
- * Attach the WebSocket server to the HTTP server. The patched Next.js server calls this.
- *
- * @param nextServer Next.js Node server instance
- */
+/** Attach the WebSocket server to the HTTP server. The patched Next.js server calls this. */
 export function setupWebSocketServer(nextServer: NextNodeServer) {
   // A server set before Next.js started belongs to a custom server, which may handle some upgrades
   // itself
@@ -36,7 +32,6 @@ export function setupWebSocketServer(nextServer: NextNodeServer) {
     useHttpServer(() => nextServer.serverOptions?.httpServer);
   if (!httpServer) return logger.error('[next-ws] was not able to find the HTTP server');
 
-  // Prevent double-attaching
   const kAttached = Symbol.for('next-ws.http-server.attached');
   if (Reflect.has(httpServer, kAttached)) return;
   Reflect.set(httpServer, kAttached, true);
@@ -139,8 +134,6 @@ export function setupWebSocketServer(nextServer: NextNodeServer) {
  * Hold the messages a client sends while nothing listens for them, until the handler adds a
  * `message` listener or settles, so a handler can await before it starts listening.
  *
- * @param client WebSocket client
- * @param emit Emit function to deliver events with
  * @returns Function that stops holding, delivering or dropping what was held
  */
 function holdMessages(client: WebSocket, emit: WebSocket['emit']) {
@@ -175,12 +168,7 @@ function holdMessages(client: WebSocket, emit: WebSocket['emit']) {
   return release;
 }
 
-/**
- * Reject an upgrade with an HTTP response, so the client sees why.
- *
- * @param socket Socket the upgrade was requested on
- * @param status HTTP status code
- */
+/** Reject an upgrade with an HTTP response, so the client sees why. */
 function rejectUpgrade(socket: Duplex, status: number) {
   if (!socket.writable) return void socket.destroy();
   socket.end(

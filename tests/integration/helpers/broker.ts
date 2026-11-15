@@ -1,10 +1,6 @@
 import { type WebSocket, WebSocketServer } from 'ws';
 
-/**
- * Start a minimal pub/sub broker for the adapter fixture, standing in for Redis.
- *
- * @returns URL to connect to, and a function to stop the broker
- */
+/** Start a minimal pub/sub broker for the adapter fixture, standing in for Redis. */
 export async function startBroker() {
   const server = new WebSocketServer({ host: '127.0.0.1', port: 0 });
   const rooms = new Map<string, Set<WebSocket>>();

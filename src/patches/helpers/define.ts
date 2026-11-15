@@ -17,12 +17,6 @@ export interface Patch extends PatchDefinition {
   execute(): Promise<void>;
 }
 
-/**
- * Define a patch.
- *
- * @param definition The definition for the patch
- * @returns The patch
- */
 export function definePatch(definition: PatchDefinition): Patch {
   return {
     ...definition,
@@ -52,12 +46,6 @@ export interface PatchStepDefinition {
 
 export type PatchStep = PatchStepDefinition;
 
-/**
- * Define a step for a patch.
- *
- * @param definition The definition for the step
- * @returns The step
- */
 export function definePatchStep(definition: PatchStepDefinition): PatchStep {
   return {
     ...definition,
@@ -67,12 +55,7 @@ export function definePatchStep(definition: PatchStepDefinition): PatchStep {
   };
 }
 
-/**
- * Patches allow prepending short-hands to paths, this will resolve them.
- *
- * @param path The path to resolve
- * @returns The resolved path
- */
+/** Resolve a `next:` path against the Next.js installation directory. */
 function resolvePath(path: string) {
   switch (path.split(':')[0]) {
     case 'next': {

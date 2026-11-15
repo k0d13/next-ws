@@ -3,13 +3,7 @@ import * as logger from 'next/dist/build/output/log.js';
 import type NextNodeServer from 'next/dist/server/next-server.js';
 import type { UpgradeHandler } from './socket.js';
 
-/**
- * Imports the route module for a given file path.
- *
- * @param nextServer Next.js Node server instance
- * @param filePathname File path
- * @returns Route module if existing
- */
+/** Import the route module for a file, compiling it first in development. */
 export async function importRouteModule(nextServer: NextNodeServer, filePathname: string) {
   // @ts-expect-error - serverOptions is protected
   if (nextServer.serverOptions?.dev) {
@@ -64,12 +58,7 @@ export type RouteContext<Path extends string> = {
 type RouteParamsOf<Path extends string> = Record<string, string | string[] | undefined> &
   RouteParams<Path>;
 
-/**
- * Create the params for a route context, a promise that also carries the values as properties.
- *
- * @param params Route parameters
- * @returns Params usable with `await` and without it
- */
+/** Create the params for a route context, a promise that also carries the values as properties. */
 export function createParams<Params extends Record<string, string | string[]>>(params: Params) {
   const promise = Promise.resolve(params);
   // Never shadow the promise's own methods, a route with a `[then]` segment would break `await`

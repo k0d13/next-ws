@@ -96,8 +96,6 @@ function rawUpgrade(lines: string[]) {
   });
 }
 
-// ===== Setup ===== //
-
 describe('setupWebSocketServer', () => {
   it('logs an error when there is no HTTP server', () => {
     setupWebSocketServer({ serverOptions: {} } as unknown as NextNodeServer);
@@ -112,8 +110,6 @@ describe('setupWebSocketServer', () => {
     expect(logger.ready).toHaveBeenCalledOnce();
   });
 });
-
-// ===== Upgrade ===== //
 
 describe('upgrade', () => {
   it('calls UPGRADE with the client, server, request and params', async () => {
@@ -233,8 +229,6 @@ describe('upgrade', () => {
   });
 });
 
-// ===== Held Messages ===== //
-
 describe('held messages', () => {
   it('holds messages until UPGRADE starts listening', async () => {
     let ready!: () => void;
@@ -301,8 +295,6 @@ describe('held messages', () => {
   });
 });
 
-// ===== Rejection ===== //
-
 describe('rejection', () => {
   it('responds 404 when no route matches', async () => {
     setupWebSocketServer(createNextServer());
@@ -355,8 +347,6 @@ describe('rejection', () => {
     expect(response).toMatch(/^HTTP\/1\.1 400 Bad Request/);
   });
 });
-
-// ===== Rooms ===== //
 
 describe('rooms', () => {
   function createAdapter() {

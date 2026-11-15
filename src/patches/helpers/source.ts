@@ -3,12 +3,7 @@ import { type Node, parse } from 'acorn';
 /** An acorn node with whatever properties its type has. */
 export type AnyNode = Node & Record<string, unknown>;
 
-/**
- * Parse a CommonJS file from the Next.js package.
- *
- * @param code Source code
- * @returns Program node
- */
+/** Parse a CommonJS file from the Next.js package. */
 export function parseScript(code: string) {
   return parse(code, {
     ecmaVersion: 'latest',
@@ -42,12 +37,9 @@ export function findAll(root: Node, predicate: (node: AnyNode, parent?: AnyNode)
   return found;
 }
 
-// ===== Regions ===== //
-
 /**
- * Every change a patch makes is wrapped in a region that remembers the code it replaced, so
- * applying a patch again first puts the original back, and the same input always gives the same
- * output.
+ * Every change a patch makes is wrapped in a region holding the code it replaced, so applying a
+ * patch again first puts the original back.
  */
 const regionPattern = (id: string) =>
   new RegExp(
@@ -58,10 +50,7 @@ const regionPattern = (id: string) =>
 /**
  * Wrap a replacement in a region.
  *
- * @param id Identifier of the patch step
  * @param original Code the replacement stands in for, empty for an insertion
- * @param replacement Code to put in its place
- * @returns The marked replacement
  */
 export function region(id: string, original: string, replacement: string) {
   const encoded = JSON.stringify(original);
@@ -69,13 +58,7 @@ export function region(id: string, original: string, replacement: string) {
   return `/*next-ws:begin ${id} ${encoded}*/${replacement}/*next-ws:end ${id}*/`;
 }
 
-/**
- * Put back the code every region of a step replaced.
- *
- * @param code Possibly patched code
- * @param id Identifier of the patch step
- * @returns Code without the step's regions
- */
+/** Put back the code every region of a step replaced. */
 export function restore(code: string, id: string) {
   return code.replace(regionPattern(id), (_, original: string) => JSON.parse(original));
 }

@@ -63,12 +63,7 @@ export class Rooms {
     return Object.fromEntries([...this.#rooms].map(([room, clients]) => [room, clients.size]));
   }
 
-  /**
-   * Clients connected to this instance that are in a room.
-   *
-   * @param room Room identifier
-   * @returns Local clients in the room
-   */
+  /** Clients connected to this instance that are in a room. */
   clients(room: string) {
     return [...(this.#rooms.get(room) ?? [])];
   }
@@ -76,9 +71,6 @@ export class Rooms {
   /**
    * Add a client to a room, subscribing to the room first if this is its first client here. The
    * client leaves every room it is in when it closes.
-   *
-   * @param client WebSocket client
-   * @param room Room identifier
    */
   async join(client: WebSocket, room: string) {
     if (client.readyState !== client.OPEN) return;
@@ -113,12 +105,7 @@ export class Rooms {
     }
   }
 
-  /**
-   * Remove a client from a room, unsubscribing from the room if it was the last client here.
-   *
-   * @param client WebSocket client
-   * @param room Room identifier
-   */
+  /** Remove a client from a room, unsubscribing from the room if it was the last client here. */
   async leave(client: WebSocket, room: string) {
     this.#memberships.get(client)?.delete(room);
     const clients = this.#rooms.get(room);
@@ -131,13 +118,7 @@ export class Rooms {
     await this.#pending.get(room);
   }
 
-  /**
-   * Send a message to every client in a room, on every instance.
-   *
-   * @param room Room identifier
-   * @param data Message to send
-   * @param options Who to leave out
-   */
+  /** Send a message to every client in a room, on every instance. */
   async broadcast(room: string, data: Message, options: BroadcastOptions = {}) {
     const binary = typeof data !== 'string';
     const except = options.except && this.#idOf(options.except);
@@ -192,19 +173,13 @@ function rooms() {
  * Add a client to a room, so it receives what is broadcast there from any instance. Clients leave
  * every room when they close.
  *
- * @param client WebSocket client
  * @param room Room name, such as `request.nextUrl.pathname` or `chat:general`
  */
 export function join(client: WebSocket, room: string) {
   return rooms().join(client, room);
 }
 
-/**
- * Remove a client from a room.
- *
- * @param client WebSocket client
- * @param room Room name
- */
+/** Remove a client from a room. */
 export function leave(client: WebSocket, room: string) {
   return rooms().leave(client, room);
 }
@@ -213,20 +188,13 @@ export function leave(client: WebSocket, room: string) {
  * Send a message to every client in a room. With an adapter, this reaches clients on every
  * instance.
  *
- * @param room Room name
  * @param data Message to send, strings are sent as text and anything else as binary
- * @param options Who to leave out
  */
 export function broadcast(room: string, data: Message, options?: BroadcastOptions) {
   return rooms().broadcast(room, data, options);
 }
 
-/**
- * Get the clients connected to this instance that are in a room.
- *
- * @param room Room name
- * @returns Local clients in the room
- */
+/** Get the clients connected to this instance that are in a room. */
 export function getClients(room: string) {
   return rooms().clients(room);
 }

@@ -6,8 +6,6 @@ export interface Definition {
   description: string;
 }
 
-// ===== CommandGroup ===== //
-
 export interface CommandGroupDefinition extends Definition {
   children: (CommandGroup | Command)[];
 }
@@ -16,12 +14,6 @@ export interface CommandGroup extends CommandGroupDefinition {
   parse(parents: CommandGroup[], argv: string[]): Promise<void> | void;
 }
 
-/**
- * Define a command group.
- *
- * @param definition The definition for the command group
- * @returns The command group
- */
 export function defineCommandGroup(definition: CommandGroupDefinition): CommandGroup {
   return {
     ...definition,
@@ -40,13 +32,6 @@ export function defineCommandGroup(definition: CommandGroupDefinition): CommandG
   };
 }
 
-/**
- * Build the help message for a command group.
- *
- * @param parents List of parent command groups used to build the usage
- * @param group The command group to build the help message for
- * @returns The help message for the command group
- */
 function buildCommandGroupHelp(parents: CommandGroup[], group: CommandGroup) {
   return `Usage: ${[...parents, group].map((p) => p.name).join(' ')} [command] [options]
 
@@ -61,8 +46,6 @@ Options:
 `;
 }
 
-// ===== Command ===== //
-
 export interface CommandDefinition<TOptions extends OptionDefinition[]> extends Definition {
   options: TOptions;
   action(options: Record<TOptions[number]['name'], unknown>): Promise<void> | void;
@@ -74,12 +57,6 @@ export interface Command<
   parse(parents: CommandGroup[], argv: string[]): Promise<void> | void;
 }
 
-/**
- * Define a command.
- *
- * @param definition The definition for the command
- * @returns The command
- */
 export function defineCommand<const TOptions extends OptionDefinition[]>(
   definition: CommandDefinition<TOptions>,
 ): Command<TOptions> {
@@ -104,13 +81,6 @@ export function defineCommand<const TOptions extends OptionDefinition[]>(
   };
 }
 
-/**
- * Build the help message for a command.
- *
- * @param parents List of parent command groups used to build the usage
- * @param command The command to build the help message for
- * @returns The help message for the command
- */
 function buildCommandHelp(parents: CommandGroup[], command: Command) {
   return `Usage: ${[...parents, command].map((p) => p.name).join(' ')} [options]
 
@@ -121,8 +91,6 @@ Options:
   ${command.options.map((o) => `${formatOption(o)} | ${o.description}`).join('\n  ')}
 `;
 }
-
-// ===== Option ===== //
 
 export interface OptionDefinition extends Definition {
   /** Single letter short form, such as `y` for `-y`. */

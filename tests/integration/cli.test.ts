@@ -62,8 +62,6 @@ async function setNextVersion(version: string) {
 const readNext = (file: string) => readFile(join(nextDirectory, file), 'utf8');
 const readTrace = async () => JSON.parse(await readNext('.next-ws-trace.json'));
 
-// ===== Patch ===== //
-
 describe('patch', () => {
   it('patches a supported version', async () => {
     const result = run('patch');
@@ -131,8 +129,6 @@ describe('patch', () => {
   });
 });
 
-// ===== Verify ===== //
-
 describe('verify', () => {
   it('passes once patched', () => {
     run('patch');
@@ -169,8 +165,6 @@ describe('verify', () => {
     expect(await readNext('dist/server/next-server.js')).toContain('/*next-ws:begin setup');
   });
 });
-
-// ===== CLI ===== //
 
 describe('cli', () => {
   it('prints the version', () => {

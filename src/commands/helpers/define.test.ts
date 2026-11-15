@@ -20,8 +20,6 @@ function createCommand() {
   return { command, action };
 }
 
-// ===== Command ===== //
-
 describe('defineCommand', () => {
   it('keeps the definition', () => {
     const { command } = createCommand();
@@ -77,8 +75,6 @@ describe('defineCommand', () => {
     await expect(command.parse([], [])).resolves.toBeUndefined();
   });
 });
-
-// ===== Command Group ===== //
 
 describe('defineCommandGroup', () => {
   function createGroup() {

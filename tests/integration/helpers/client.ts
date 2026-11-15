@@ -25,10 +25,6 @@ export interface Client {
 /**
  * Open a WebSocket connection and queue every message it receives, so tests wait for messages
  * rather than for time to pass.
- *
- * @param url WebSocket URL
- * @param options Options passed to `ws`
- * @returns Connected client
  */
 export async function connect(url: string, options?: ClientOptions): Promise<Client> {
   const socket = new WebSocket(url, options);
@@ -103,13 +99,7 @@ export type Rejection =
   | { type: 'error'; message: string }
   | { type: 'closed'; code: number };
 
-/**
- * Attempt a WebSocket connection that is expected to fail, and describe how it failed.
- *
- * @param url WebSocket URL
- * @param options Options passed to `ws`
- * @returns How the upgrade was rejected
- */
+/** Attempt a WebSocket connection that is expected to fail, and describe how it failed. */
 export async function reject(url: string, options?: ClientOptions): Promise<Rejection> {
   const socket = new WebSocket(url, options);
   return new Promise<Rejection>((resolve, rejectPromise) => {
