@@ -26,8 +26,11 @@
 - [🚀 Usage](#-usage)
 - [🌀 Examples](#-examples)
 - [🔒 HTTPS and `wss://`](#-https-and-wss)
+- [🧪 Development](#-development)
 
 ## 📦 Installation
+
+next-ws supports Next.js 15 and 16, on Node.js 20.9 or later.
 
 To set up a WebSocket server with `next-ws`, you need to patch your local Next.js installation. `next-ws` simplifies this process by providing a CLI command that handles the patching for you. Follow these steps to get started:
 
@@ -51,57 +54,166 @@ To set up a WebSocket server with `next-ws`, you need to patch your local Next.j
 
 ## 🚀 Usage
 
-Using WebSocket connections in your Next.js app directory is simple with `next-ws`. You can handle WebSocket connections directly in your API routes via exported `UPGRADE` functions.
+Handle WebSocket connections in any route file in the app directory by exporting an `UPGRADE` function. It runs once for each new connection.
 
-```js
-export function UPGRADE(
-  client: import('ws').WebSocket,
-  server: import('ws').WebSocketServer,
-  request: import('next/server').NextRequest,
-  context: import('next-ws/server').RouteContext<'/api/ws'>,
+```ts
+// app/api/rooms/[room]/route.ts
+
+import type { NextRequest } from 'next/server';
+import type { WebSocket, WebSocketServer } from 'ws';
+
+export async function UPGRADE(
+  client: WebSocket,
+  server: WebSocketServer,
+  request: NextRequest,
+  context: RouteContext<'/api/rooms/[room]'>,
 ) {
+  const { room } = await context.params;
+  client.on('message', (message) => client.send(`${room}: ${message}`));
+}
+```
+
+| Argument  | What it is                                                                                  |
+| --------- | ------------------------------------------------------------------------------------------- |
+| `client`  | The connection, a `WebSocket` from [`ws`](https://github.com/websockets/ws).                |
+| `server`  | The `WebSocketServer` every connection belongs to, `server.clients` lists all of them.      |
+| `request` | The upgrade request as a `NextRequest`, with its URL, headers and cookies.                  |
+| `context` | Route parameters in `context.params`, such as `{ room: 'general' }` for `/rooms/[room]/ws`. |
+
+`context` has the same shape as for any route handler, so the global `RouteContext` type Next.js generates (Next.js 15.5 and later) fits it, and `params` is a promise to `await`. On older versions, import `RouteContext` from `next-ws/server` instead. For code written for next-ws 2, the parameters can still be read straight off `context.params` without awaiting.
+
+`UPGRADE` can `await` before it listens for messages, such as to check a session. Messages the client sends in the meantime are held until it adds a `message` listener or returns, rather than lost.
+
+Requests to a path without a matching route, or to a route without `UPGRADE`, are refused with a `404`. With a custom server, upgrades to paths that are not routes are left for its own `upgrade` listeners instead. If `UPGRADE` throws, the connection is closed with code `1011`.
+
+### Headers and cookies
+
+`headers()` and `cookies()` from `next/headers` work inside `UPGRADE`, and inside any event listener it adds, so authentication works the way it does in a page:
+
+```ts
+import { cookies } from 'next/headers';
+
+export async function UPGRADE(client: WebSocket) {
+  const session = await getSession((await cookies()).get('session')?.value);
+  if (!session) return client.close(1008, 'Unauthorised');
   // ...
 }
 ```
 
-## 🌀 Examples
+### Rooms and sending from anywhere on the server
 
-> [!TIP]  
-> For more detailed examples, refer the [`examples` directory](https://github.com/k0d13/next-ws/tree/main/examples).
-
-### Echo Server
-
-This example demonstrates a simple WebSocket echo server that sends back any message it receives. Create a new API route file anywhere in your app directory and export a `UPGRADE` function to handle WebSocket connections:
+Put clients in rooms with `join()`, and send to everyone in a room with `broadcast()`. Clients leave every room when they close. Server actions and route handlers run in the same process as the WebSocket server, so they can broadcast too:
 
 ```ts
-// app/api/ws/route.ts (can be any route file in the app directory)
+// app/api/rooms/[room]/route.ts
+import { broadcast, join } from 'next-ws/server';
 
-export function UPGRADE(
-  client: import('ws').WebSocket,
-  server: import('ws').WebSocketServer
-) {
-  console.log('A client connected');
-
-  client.on('message', (message) => {
-    console.log('Received message:', message);
-    client.send(message);
-  });
-
-  client.once('close', () => {
-    console.log('A client disconnected');
-  });
+export async function UPGRADE(client: WebSocket, server: WebSocketServer, request: NextRequest) {
+  const room = request.nextUrl.pathname;
+  await join(client, room);
+  // Send every message on to the rest of the room
+  client.on('message', (data) => broadcast(room, data.toString(), { except: client }));
 }
 ```
 
-You can now connect to your WebSocket server, send it a message and receive the same message back.
+```ts
+// app/actions.ts
+'use server';
 
-### Chat Room
+import { broadcast } from 'next-ws/server';
 
-See the [chat room example](https://github.com/k0d13/next-ws/tree/main/examples/chat-room).
+export async function announce(text: string) {
+  await broadcast('/api/rooms/general', text);
+}
+```
 
-### WebSocket Proxy
+| Function                             | What it does                                                                     |
+| ------------------------------------ | -------------------------------------------------------------------------------- |
+| `join(client, room)`                 | Adds a client to a room. Join only once a client is allowed in.                  |
+| `leave(client, room)`                | Removes a client from a room.                                                    |
+| `broadcast(room, data, { except }?)` | Sends to every client in a room, on every instance with an adapter.              |
+| `getClients(room)`                   | Lists the clients in a room on this instance.                                    |
+| `getWebSocketServer()`               | The `WebSocketServer` itself, whose `clients` are every connection on any route. |
 
-Forward connections to another WebSocket server, using a catch-all route to keep the rest of the path. See the [websocket proxy example](https://github.com/k0d13/next-ws/tree/main/examples/websocket-proxy).
+### Configuring the WebSocket server
+
+next-ws creates a `WebSocketServer` with the defaults of `ws`, which accept messages of up to 100 MiB. To change its options, set your own in `instrumentation.ts`, which Next.js runs before next-ws accepts any connection:
+
+```ts
+// instrumentation.ts
+export async function register() {
+  if (process.env.NEXT_RUNTIME !== 'nodejs') return;
+  const { setWebSocketServer } = await import('next-ws/server');
+  const { WebSocketServer } = await import('ws');
+  setWebSocketServer(new WebSocketServer({ noServer: true, maxPayload: 1024 * 1024 }));
+}
+```
+
+### Custom servers
+
+With a custom server, create the HTTP and WebSocket servers yourself and hand them to next-ws before Next.js starts:
+
+```ts
+import { AsyncLocalStorage } from 'node:async_hooks';
+import { createServer } from 'node:http';
+import next from 'next';
+import { setHttpServer, setWebSocketServer } from 'next-ws/server';
+import { WebSocketServer } from 'ws';
+
+// The `next` CLI sets this up itself, a custom server has to do it too
+globalThis.AsyncLocalStorage = AsyncLocalStorage;
+
+const httpServer = createServer();
+setHttpServer(httpServer);
+setWebSocketServer(new WebSocketServer({ noServer: true }));
+
+const app = next({ dev: process.env.NODE_ENV !== 'production' });
+await app.prepare();
+httpServer.on('request', app.getRequestHandler()).listen(3000);
+```
+
+### Running several instances
+
+Clients connected to different servers cannot see each other. An adapter connects the servers through a message broker, such as Redis pub/sub, so that `broadcast()` reaches a room's clients on every instance. Set one with `setAdapter()` in `instrumentation.ts`, or in a custom server before Next.js starts:
+
+```ts
+// instrumentation.ts
+export async function register() {
+  if (process.env.NEXT_RUNTIME !== 'nodejs') return;
+  const { setAdapter } = await import('next-ws/server');
+  const { RedisAdapter } = await import('./lib/redis-adapter');
+  setAdapter(new RedisAdapter(process.env.REDIS_URL));
+}
+```
+
+The adapter only carries what you `broadcast()`. next-ws subscribes an instance to a room when its first local client joins, and unsubscribes when the last one leaves.
+
+An adapter implements four methods, and only ever handles strings:
+
+```ts
+import type { Adapter } from 'next-ws/server';
+
+class RedisAdapter implements Adapter {
+  broadcast(room: string, message: string) {} // Publish to every instance
+  subscribe(room: string, handler: (message: string) => void) {} // Start receiving a room
+  unsubscribe(room: string) {} // Stop, once the last local client has left
+  close() {} // Clean up connections
+}
+```
+
+See the [multi-instance example](https://github.com/k0d13/next-ws/tree/main/examples/multi-instance) for a complete Redis adapter.
+
+## 🌀 Examples
+
+Each example is a complete app you can copy.
+
+| Example                                                                                | Shows                                                                         |
+| -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| [Chat](https://github.com/k0d13/next-ws/tree/main/examples/chat)                       | Rooms from route params, sessions from cookies, presence, typing, reconnects. |
+| [Live dashboard](https://github.com/k0d13/next-ws/tree/main/examples/live-dashboard)   | Server push on an interval, cleaning up, sending from a server action.        |
+| [Custom server](https://github.com/k0d13/next-ws/tree/main/examples/custom-server)     | Your own HTTP server, extra routes and graceful shutdown.                     |
+| [Multi-instance](https://github.com/k0d13/next-ws/tree/main/examples/multi-instance)   | Sharing rooms between servers with a Redis adapter.                           |
+| [WebSocket proxy](https://github.com/k0d13/next-ws/tree/main/examples/websocket-proxy) | Forwarding connections to another WebSocket server from a catch-all route.    |
 
 ## 🔒 HTTPS and `wss://`
 
@@ -122,3 +234,14 @@ const httpsServer = createServer({
 });
 setHttpServer(httpsServer);
 ```
+
+## 🧪 Development
+
+```bash
+pnpm install
+pnpm test:unit         # Unit tests and patch snapshots against real Next.js releases
+pnpm test:integration  # Real Next.js apps in dev and production, over real WebSockets
+pnpm check             # Types, lint, format and unused code
+```
+
+The integration tests use Redis when `REDIS_URL` is set, and a small stand-in broker otherwise.

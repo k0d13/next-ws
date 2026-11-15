@@ -1,0 +1,30 @@
+{
+  "name": "@examples/multi-instance",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "next build",
+    "dev": "tsx server.ts --dev --port 3000",
+    "dev:second": "tsx server.ts --dev --port 3001",
+    "prepare": "next-ws patch",
+    "redis": "docker compose up -d redis",
+    "start": "tsx server.ts --port 3000",
+    "start:second": "tsx server.ts --port 3001"
+  },
+  "dependencies": {
+    "ioredis": "catalog:",
+    "next": "catalog:",
+    "next-ws": "workspace:^",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "tsx": "^4.23.15",
+    "ws": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@types/ws": "catalog:",
+    "typescript": "catalog:"
+  }
+}

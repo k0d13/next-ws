@@ -1,0 +1,13 @@
+# next@15.0.0
+===================================================================
+--- a/dist/server/lib/router-server.js
++++ b/dist/server/lib/router-server.js
+@@ -493,7 +493,7 @@
+             // TODO: allow upgrade requests to pages/app paths?
+             // this was not previously supported
+             if (matchedOutput) {
+-                return socket.end();
++                return /*next-ws:begin keep-socket-open "socket.end()"*/void 0/*next-ws:end keep-socket-open*/;
+             }
+             if (parsedUrl.protocol) {
+                 return await (0, _proxyrequest.proxyRequest)(req, socket, parsedUrl, head);

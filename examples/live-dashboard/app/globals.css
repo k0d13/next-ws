@@ -1,0 +1,183 @@
+:root {
+  --background: #f6f7f9;
+  --surface: #ffffff;
+  --border: #e3e6ea;
+  --text: #16181d;
+  --muted: #646b78;
+  --accent: #0d9488;
+  --accent-text: #ffffff;
+  --ok: #16a34a;
+  --warn: #d97706;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0f1115;
+    --surface: #171a21;
+    --border: #2a2f3a;
+    --text: #e8eaee;
+    --muted: #9aa1ad;
+    --accent: #2dd4bf;
+    --accent-text: #0f1115;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 16px;
+  background: var(--background);
+  color: var(--text);
+  font:
+    15px/1.5 system-ui,
+    sans-serif;
+}
+
+h1,
+h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+h2 {
+  font-size: 1rem;
+}
+
+input,
+button {
+  font: inherit;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: inherit;
+}
+
+button {
+  border: 0;
+  background: var(--accent);
+  color: var(--accent-text);
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard {
+  max-width: 960px;
+  margin: 0 auto;
+  display: grid;
+  gap: 16px;
+}
+
+.dashboard header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.status {
+  white-space: nowrap;
+}
+
+.status::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--warn);
+}
+
+.status.open::before {
+  background: var(--ok);
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.tile,
+.announcements {
+  margin: 0;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.tile {
+  display: grid;
+  gap: 4px;
+}
+
+.tile strong {
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.sparkline {
+  width: 100%;
+  height: 40px;
+}
+
+.sparkline path {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.announcements {
+  display: grid;
+  gap: 12px;
+}
+
+.announcements ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.announcements li {
+  display: flex;
+  gap: 12px;
+  overflow-wrap: anywhere;
+}
+
+.announcements p {
+  margin: 0;
+}
+
+.announcements time {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

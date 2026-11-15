@@ -1,5 +1,6 @@
 import { getInstalledNextVersion, writeTrace } from '~/patches/helpers/next.js';
 import patches from '~/patches/index.js';
+import { version as nextWsVersion } from '../../package.json';
 import * as console from './helpers/console.js';
 import { defineCommand } from './helpers/define.js';
 import * as semver from './helpers/semver.js';
@@ -16,52 +17,39 @@ export default defineCommand({
   ],
   async action(options) {
     const supported = patches.map((p) => p.versions).join(' || ');
-    const minimum = semver.minVersion(supported)?.version ?? supported;
-    const maximum = semver.maxVersion(supported)?.version ?? supported;
     const current = await getInstalledNextVersion();
-
-    if (semver.ltr(current, minimum)) {
-      // The installed version is lower than the minimum supported version
-      console.error(
-        `Next.js v${current} is not supported, a minimum of v${minimum} is required`,
-      );
-      process.exit(1);
-    }
-
     let patch = patches.find((p) => semver.satisfies(current, p.versions));
-    if (semver.gtr(current, maximum)) {
-      // The installed version is higher than the maximum supported version
-      console.warn(
-        `Next.js v${current} is not officially supported, a maximum of v${maximum} is recommended.`,
-      );
-      const confirm =
-        options.yes ||
-        (await console.confirm('Are you sure you want to proceed?'));
 
-      if (confirm) {
-        patch = patches[patches.length - 1];
-        console.info('Proceeding with the latest patch');
-        console.log(
-          'If you encounter any issues please report them at https://github.com/k0d13/next-ws/issues',
-        );
-      } else {
-        console.error('Aborted');
-        process.exit(1);
-      }
+    if (!patch && semver.ltr(current, supported)) {
+      // The installed version is lower than the minimum supported version
+      const minimum = semver.minVersion(supported)?.version ?? supported;
+      console.error(`Next.js v${current} is not supported, a minimum of v${minimum} is required`);
+      process.exit(1);
     }
 
     if (!patch) {
-      console.error(
-        `Next.js v${current} is not supported, please upgrade to a version within the range '${supported}'`,
+      // The installed version is newer than any patch was written for
+      console.warn(`Next.js v${current} is not supported yet, next-ws supports '${supported}'.`);
+      const confirm = options.yes || (await console.confirm('Are you sure you want to proceed?'));
+      if (!confirm) {
+        console.error('Aborted, pass --yes to patch without asking');
+        process.exit(1);
+      }
+      patch = patches[patches.length - 1]!;
+      console.info('Proceeding with the latest patch');
+      console.log(
+        'If you encounter any issues please report them at https://github.com/k0d13/next-ws/issues',
       );
-      process.exit(1);
+    } else if (semver.gt(current, patch.tested)) {
+      // Every step checks it found what it changes, so an untested version either works or fails here
+      console.warn(`Next.js v${current} is newer than v${patch.tested}, the last version tested`);
     }
 
     console.info(`Patching Next.js v${current} with '${patch.versions}'`);
     await patch.execute();
 
     console.info('Saving patch trace file...');
-    await writeTrace({ patch: patch.versions, version: current });
+    await writeTrace({ patch: patch.versions, version: current, nextWs: nextWsVersion });
 
     console.info('All done!');
   },

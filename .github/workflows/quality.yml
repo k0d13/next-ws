@@ -1,0 +1,130 @@
+name: Quality
+
+# The shared gate: build, check and test the package. Nothing triggers this on its
+# own, so every caller decides when it runs and gets the same answer.
+on:
+  workflow_call:
+
+# These jobs run branch code, so the token only needs to read the repository.
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Building
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Setup toolchain
+        uses: $/.github/actions/toolchain
+
+      - name: Build the package
+        run: pnpm build
+
+  check:
+    name: Checking
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Setup toolchain
+        uses: $/.github/actions/toolchain
+
+      - name: Types
+        run: pnpm check:types
+
+      - name: Lint
+        run: pnpm check:lint
+
+      - name: Format
+        run: pnpm check:format
+
+      - name: Deps
+        run: pnpm check:deps
+
+  test:
+    name: Testing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Setup toolchain
+        uses: $/.github/actions/toolchain
+
+      # The patch snapshot tests read real Next.js files out of published tarballs
+      - name: Cache Next.js tarballs
+        uses: actions/cache@v6.1.0
+        with:
+          path: node_modules/.cache/next-ws
+          key: next-dist-${{ hashFiles('src/patches/**') }}
+          restore-keys: next-dist-
+
+      - name: Run unit and patch tests with coverage
+        run: pnpm coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v7.1.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: .coverage/lcov.info
+          # Pull requests from forks have no token, which should not fail the run
+          fail_ci_if_error: false
+
+  integration:
+    name: Integration (next@${{ matrix.next }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The oldest supported release line, the newest 15.x and the newest overall
+        next: ['~15.0.0', '^15', 'latest']
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Setup toolchain
+        uses: $/.github/actions/toolchain
+
+      - name: Install the Next.js version under test
+        run: pnpm --filter @next-ws/integration-tests add next@${{ matrix.next }}
+
+      # The CLI tests patch real Next.js files out of a published tarball
+      - name: Cache Next.js tarballs
+        uses: actions/cache@v6.1.0
+        with:
+          path: node_modules/.cache/next-ws
+          key: next-dist-${{ hashFiles('src/patches/**') }}
+          restore-keys: next-dist-
+
+      - name: Run integration tests
+        run: pnpm test:integration
+        env:
+          REDIS_URL: redis://localhost:6379
+
+  examples:
+    name: Examples
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Setup toolchain
+        uses: $/.github/actions/toolchain
+
+      # `next build` type checks each example as well, so they cannot quietly go stale
+      - name: Build every example
+        run: pnpm --filter "./examples/*" build

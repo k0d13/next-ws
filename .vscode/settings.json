@@ -1,51 +1,82 @@
 {
+  // Editor
+  "editor.formatOnSave": true,
+  "editor.insertSpaces": true,
+  "editor.rulers": [100],
+  "editor.tabSize": 2,
+
+  // Explorer
   "explorer.compactFolders": true,
   "explorer.fileNesting.enabled": true,
   "explorer.fileNesting.patterns": {
-    "package.json": "pnpm-lock.yaml, pnpm-workspace.yaml",
+    "package.json": "pnpm-lock.yaml, pnpm-workspace.yaml, .npmrc",
+    "*.ts": "$(capture).test.ts, $(capture).test.tsx",
+    "*.tsx": "$(capture).test.tsx",
     "*.js": "$(capture).js.map, $(capture).d.ts, $(capture).d.ts.map, $(capture).cjs",
-    "*.cjs": "$(capture).cjs.map, $(capture).d.cts, $(capture).d.cts.map"
+    "*.cjs": "$(capture).cjs.map, $(capture).d.cts, $(capture).d.cts.map",
+    "tsconfig.json": "*-env.d.ts"
   },
 
-  "editor.insertSpaces": true,
-  "editor.tabSize": 2,
-
-  "[typescript]": {
-    "editor.formatOnSave": true,
-    "editor.defaultFormatter": "biomejs.biome",
-    "editor.codeActionsOnSave": {
-      "source.organizeImports.biome": "explicit"
-    }
+  // Files
+  "files.eol": "\n",
+  "files.watcherExclude": {
+    "**/.next": true,
+    "**/.coverage": true,
+    "**/dist": true
+  },
+  "search.exclude": {
+    "**/.next": true,
+    "**/.coverage": true,
+    "**/dist": true
   },
 
   // TypeScript
-  "typescript.preferences.importModuleSpecifierEnding": "js",
+  "js/ts.experimental.useTsgo": true,
+  "js/ts.preferences.importModuleSpecifierEnding": "js",
+  "js/ts.inlayHints.parameterNames.enabled": "all",
+  "js/ts.inlayHints.variableTypes.suppressWhenTypeMatchesName": true,
+  "[typescript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode",
+    "editor.codeActionsOnSave": { "source.fixAll.oxc": "explicit" }
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode",
+    "editor.codeActionsOnSave": { "source.fixAll.oxc": "explicit" }
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode",
+    "editor.codeActionsOnSave": { "source.fixAll.oxc": "explicit" }
+  },
+  "[json]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
 
-  // Code Spell Checker
-  "cSpell.language": "en-AU",
-  "cSpell.words": [],
-
-  // Todo Tree
-  "todo-tree.general.tags": ["=====", "TODO", "CHANGE"],
-  "todo-tree.highlights.customHighlight": {
+  // Better TODO Tree
+  "better-todo-tree.general.tags": ["=====", "TODO"],
+  "better-todo-tree.highlights.customHighlight": {
     "=====": {
       "type": "whole-line",
       "icon": "bookmark",
+      "background": "#00000000",
       "foreground": "#dadada",
+      "iconColour": "#dadada",
       "gutterIcon": true,
       "hideFromTree": true
     },
     "TODO": {
       "type": "whole-line",
-      "icon": "inbox",
+      "icon": "check",
+      "background": "#00000000",
       "foreground": "#ff9900",
-      "gutterIcon": true
-    },
-    "CHANGE": {
-      "type": "whole-line",
-      "icon": "diff",
-      "foreground": "#00ff00",
+      "iconColour": "#ff9900",
       "gutterIcon": true
     }
-  }
+  },
+
+  // Code Spell Checker
+  "cSpell.language": "en-AU",
+  "cSpell.words": ["ioredis", "jscodeshift", "nextjs", "tsdown"]
 }

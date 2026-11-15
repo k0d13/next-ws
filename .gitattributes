@@ -1,0 +1,8 @@
+* text=auto eol=lf
+
+# Patch snapshots are compared byte for byte, so keep them identical on every platform
+tests/patches/__snapshots__/** text eol=lf
+
+# Generated, kept out of diffs and line counts
+pnpm-lock.yaml -diff linguist-generated
+.github/workflows/actions.lock -diff linguist-generated

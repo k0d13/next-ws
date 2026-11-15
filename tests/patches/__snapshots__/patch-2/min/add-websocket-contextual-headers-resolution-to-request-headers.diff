@@ -1,0 +1,18 @@
+# next@15.0.0
+===================================================================
+--- a/dist/server/request/headers.js
++++ b/dist/server/request/headers.js
+@@ -16,7 +16,12 @@
+ const _utils = require("./utils");
+ const _dynamicrenderingutils = require("../dynamic-rendering-utils");
+ const _creatededupedbycallsiteservererrorloger = require("../create-deduped-by-callsite-server-error-loger");
+-function headers() {
++function headers() {/*next-ws:begin request-headers ""*/
++{
++  const store = globalThis[Symbol.for('next-ws.request-store')]?.getStore();
++  if (store) return Promise.resolve(store.headers);
++}
++/*next-ws:end request-headers*/
+     const workStore = _workasyncstorageexternal.workAsyncStorage.getStore();
+     const workUnitStore = _workunitasyncstorageexternal.workUnitAsyncStorage.getStore();
+     if (workStore) {

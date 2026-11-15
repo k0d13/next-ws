@@ -1,0 +1,27 @@
+name: Setup toolchain
+description: Setup the mise toolchain, install dependencies and restore caches
+
+runs:
+  using: composite
+  steps:
+    # Node and pnpm come from mise.toml, so CI runs the same versions as local
+    - name: Install the toolchain
+      uses: jdx/mise-action@v5.2.0
+      with:
+        cache: true
+
+    - name: Get the pnpm store path
+      id: pnpm-store
+      run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      shell: bash
+
+    - name: Cache the pnpm store
+      uses: actions/cache@v6.1.0
+      with:
+        path: ${{ steps.pnpm-store.outputs.path }}
+        key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+        restore-keys: pnpm-${{ runner.os }}-
+
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+      shell: bash

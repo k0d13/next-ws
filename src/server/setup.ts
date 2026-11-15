@@ -1,181 +1,177 @@
-import { AsyncLocalStorage } from 'node:async_hooks';
+import { AsyncLocalStorage, AsyncResource } from 'node:async_hooks';
+import { type IncomingMessage, STATUS_CODES } from 'node:http';
+import type { Duplex } from 'node:stream';
+import { debuglog } from 'node:util';
 import * as logger from 'next/dist/build/output/log.js';
 import type NextNodeServer from 'next/dist/server/next-server.js';
-import * as ws from 'ws';
-import type { Adapter } from './helpers/adapter.js';
+import { type RawData, type WebSocket, WebSocketServer } from 'ws';
 import { findMatchingRoute } from './helpers/match.js';
-import { importRouteModule } from './helpers/module.js';
+import { createParams, importRouteModule } from './helpers/module.js';
 import { toNextRequest } from './helpers/request.js';
 import { createRequestStore } from './helpers/store.js';
 import {
+  getAdapter,
+  getHttpServer,
   useHttpServer,
   useRequestStorage,
   useWebSocketServer,
 } from './persistent.js';
 
-const WebSocketServer =
-  ws.WebSocketServer || (ws as { Server?: typeof ws.WebSocketServer }).Server;
+const debug = debuglog('next-ws');
 
-export interface SetupOptions {
-  adapter?: Adapter;
-}
+/** Most a client can send before its handler is ready, beyond which messages are dropped. */
+const maxHeldBytes = 1024 * 1024;
 
-/**
- * Attach the WebSocket server to the HTTP server.
- * @param nextServer Next.js Node server instance
- * @param options Setup options including optional adapter
- */
-export function setupWebSocketServer(
-  nextServer: NextNodeServer,
-  options?: SetupOptions,
-) {
+/** Attach the WebSocket server to the HTTP server. The patched Next.js server calls this. */
+export function setupWebSocketServer(nextServer: NextNodeServer) {
+  // A server set before Next.js started belongs to a custom server, which may handle some upgrades
+  // itself
+  const customServer = getHttpServer() !== undefined;
   const httpServer = //
     // @ts-expect-error - serverOptions is protected
     useHttpServer(() => nextServer.serverOptions?.httpServer);
-  if (!httpServer)
-    return logger.error('[next-ws] was not able to find the HTTP server');
-  const wsServer = //
-    useWebSocketServer(() => new WebSocketServer({ noServer: true }));
-  const requestStorage = //
-    useRequestStorage(() => new AsyncLocalStorage());
-  const adapter = options?.adapter;
+  if (!httpServer) return logger.error('[next-ws] was not able to find the HTTP server');
 
-  if (adapter) {
-    logger.ready('[next-ws] adapter configured for multi-instance support');
-  } else {
-    logger.ready('[next-ws] has started the WebSocket server');
-  }
-
-  // Prevent double-attaching
   const kAttached = Symbol.for('next-ws.http-server.attached');
   if (Reflect.has(httpServer, kAttached)) return;
   Reflect.set(httpServer, kAttached, true);
 
-  // Store route -> clients mapping for adapter broadcasts
-  const routeClients = new Map<string, Set<ws.WebSocket>>();
+  const requestStorage = //
+    useRequestStorage(() => new AsyncLocalStorage());
+  // @ts-expect-error - serverOptions is protected
+  const basePath: string = nextServer.serverOptions?.conf.basePath || '';
 
-  httpServer.on('upgrade', async (message, socket, head) => {
-    const request = toNextRequest(message);
+  logger.ready('[next-ws] has started the WebSocket server');
 
+  async function handleUpgrade(message: IncomingMessage, socket: Duplex, head: Buffer) {
+    // Next.js handles its own sockets, such as HMR
+    if (message.url?.startsWith(`${basePath}/_next/`)) return;
+
+    // Wait for Next.js to finish starting, which runs `instrumentation.ts` where an adapter or
+    // WebSocket server may be set
+    await nextServer.prepare();
+
+    let request: ReturnType<typeof toNextRequest>;
+    try {
+      request = toNextRequest(message);
+    } catch (cause) {
+      logger.error('[next-ws] could not parse upgrade request', cause);
+      return rejectUpgrade(socket, 400);
+    }
     const pathname = request.nextUrl.pathname;
-    if (pathname.includes('/_next')) return;
 
     const route = findMatchingRoute(nextServer, pathname);
     if (!route) {
-      logger.error(`[next-ws] could not find route for page ${pathname}`);
-      return socket.end();
+      // Next.js leaves these for a custom server's own upgrade listeners, and so does next-ws
+      if (customServer) return;
+      debug(`no route for upgrade to ${pathname}`);
+      return rejectUpgrade(socket, 404);
     }
 
     const module = await importRouteModule(nextServer, route.filename);
     if (!module) {
       logger.error(`[next-ws] could not import module for page ${pathname}`);
-      return socket.end();
+      return rejectUpgrade(socket, 500);
     }
 
-    let handleUpgrade: typeof module.userland.UPGRADE;
-    let handleSocket: typeof module.userland.SOCKET;
-    try {
-      handleUpgrade = module.userland.UPGRADE;
-      handleSocket = module.userland.SOCKET;
-    } catch (cause) {
-      // Reading `userland` can still throw if `ensureUserland()` in
-      // `importRouteModule` did not fully resolve it. End the socket rather
-      // than leaving the client waiting indefinitely on the upgrade.
-      logger.error(
-        `[next-ws] could not access handlers for page ${pathname}`,
-        cause,
-      );
-      return socket.end();
+    // Reading `userland` can throw if `ensureUserland()` did not fully resolve it, which the
+    // catch around this function turns into a 500
+    const handler = module.userland.UPGRADE;
+    if (typeof handler !== 'function') {
+      debug(`route '${pathname}' does not export an UPGRADE handler`);
+      return rejectUpgrade(socket, 404);
     }
-    if (
-      (!handleUpgrade || typeof handleUpgrade !== 'function') &&
-      (!handleSocket || typeof handleSocket !== 'function')
-    ) {
-      logger.error(`[next-ws] route '${pathname}' does not export a handler`);
-      return socket.end();
-    }
-    if (handleSocket)
-      logger.warnOnce(
-        'DeprecationWarning: [next-ws] SOCKET is deprecated, prefer UPGRADE instead, see https://github.com/k0d13/next-ws#-usage',
-      );
 
-    wsServer.handleUpgrade(message, socket, head, async (client) => {
+    const wsServer = //
+      useWebSocketServer(() => new WebSocketServer({ noServer: true }));
+    wsServer.handleUpgrade(message, socket, head, (client) => {
       wsServer.emit('connection', client, message);
 
-      // Track client by route for adapter
-      if (adapter) {
-        if (!routeClients.has(pathname)) {
-          routeClients.set(pathname, new Set());
-
-          // Subscribe to adapter messages for this route
-          await adapter.onMessage(pathname, (message: unknown) => {
-            const clients = routeClients.get(pathname);
-            if (!clients) return;
-
-            for (const localClient of clients) {
-              if (localClient.readyState === ws.WebSocket.OPEN) {
-                localClient.send(
-                  typeof message === 'string'
-                    ? message
-                    : JSON.stringify(message),
-                );
-              }
-            }
-          });
-        }
-        routeClients.get(pathname)?.add(client);
-      }
-
-      try {
-        const context = { params: route.params };
-        if (handleUpgrade) {
-          await requestStorage.run(
-            createRequestStore(request), //
-            () => handleUpgrade(client, wsServer, request, context),
-          );
-        }
-        //
-        else if (handleSocket) {
-          const handleClose = //
-            await handleSocket(client, message, wsServer, context);
-          if (typeof handleClose === 'function')
-            client.once('close', () => handleClose());
-        }
-
-        // Intercept client messages to broadcast via adapter
-        if (adapter) {
-          client.on('message', (data) => {
-            adapter.broadcast(pathname, data).catch((err: unknown) => {
-              logger.error('[next-ws] adapter broadcast failed:', err);
-            });
-          });
-        }
-      } catch (cause) {
-        logger.error(
-          `[next-ws] error in socket handler for '${pathname}'`,
-          cause,
+      void requestStorage.run(createRequestStore(request), () => {
+        // Emit every event in this request's context, so `headers()` and `cookies()` keep
+        // working inside listeners the handler adds
+        const release = holdMessages(
+          client,
+          AsyncResource.bind(client.emit, 'next-ws.client', client),
         );
-        try {
-          client.close(1011, 'Internal Server Error');
-        } catch {}
-      }
 
-      client.once('close', () => {
-        if (adapter) {
-          routeClients.get(pathname)?.delete(client);
-        }
-      });
-    });
-
-    return;
-  });
-
-  // Cleanup adapter on server close
-  if (adapter) {
-    httpServer.once('close', async () => {
-      await adapter.close().catch((err: unknown) => {
-        logger.error('[next-ws] adapter cleanup failed:', err);
+        return Promise.resolve()
+          .then(() => handler(client, wsServer, request, { params: createParams(route.params) }))
+          .then(
+            () => release(true),
+            (cause: unknown) => {
+              release(false);
+              logger.error(`[next-ws] error in socket handler for '${pathname}'`, cause);
+              try {
+                client.close(1011, 'Internal Server Error');
+              } catch {}
+            },
+          );
       });
     });
   }
+
+  httpServer.on('upgrade', (message, socket, head) => {
+    // Nothing thrown here can be allowed to become an unhandled rejection, it would take down the
+    // whole server
+    handleUpgrade(message, socket, head).catch((cause: unknown) => {
+      logger.error('[next-ws] could not handle upgrade', cause);
+      rejectUpgrade(socket, 500);
+    });
+  });
+
+  // Clean up the adapter, wherever it was set, once the server closes
+  httpServer.once('close', async () => {
+    try {
+      await getAdapter()?.close();
+    } catch (cause) {
+      logger.error('[next-ws] adapter cleanup failed:', cause);
+    }
+  });
+}
+
+/**
+ * Hold the messages a client sends while nothing listens for them, until the handler adds a
+ * `message` listener or settles, so a handler can await before it starts listening.
+ *
+ * @returns Function that stops holding, delivering or dropping what was held
+ */
+function holdMessages(client: WebSocket, emit: WebSocket['emit']) {
+  let held: [RawData, boolean][] | undefined = [];
+  let heldBytes = 0;
+
+  const release = (deliver: boolean) => {
+    const messages = held;
+    held = undefined;
+    client.off('newListener', onListener);
+    if (deliver) for (const args of messages ?? []) emit.call(client, 'message', ...args);
+  };
+  // Deliver once the listener has been added, after the handler's synchronous code has run
+  const onListener = (event: string | symbol) => {
+    if (event === 'message') queueMicrotask(() => release(true));
+  };
+  client.on('newListener', onListener);
+
+  client.emit = function (event: string | symbol, ...args: unknown[]) {
+    if (held && event === 'message' && client.listenerCount('message') === 0) {
+      const [data, isBinary] = args as [RawData, boolean];
+      heldBytes += Array.isArray(data)
+        ? data.reduce((n, b) => n + b.byteLength, 0)
+        : data.byteLength;
+      if (heldBytes <= maxHeldBytes) held.push([data, isBinary]);
+      else debug('dropped a message sent before the UPGRADE handler was ready');
+      return true;
+    }
+    return emit.call(client, event, ...args);
+  };
+
+  return release;
+}
+
+/** Reject an upgrade with an HTTP response, so the client sees why. */
+function rejectUpgrade(socket: Duplex, status: number) {
+  if (!socket.writable) return void socket.destroy();
+  socket.end(
+    `HTTP/1.1 ${status} ${STATUS_CODES[status]}\r\nConnection: close\r\nContent-Length: 0\r\n\r\n`,
+  );
 }

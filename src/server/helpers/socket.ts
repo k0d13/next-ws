@@ -1,28 +1,16 @@
-/**
- * WebSocket socket handler.
- * @param client WebSocket client instance
- * @param request Node.js HTTP incoming message instance
- * @param server WebSocket server instance
- * @param context Route context
- * @deprecated Prefer UPGRADE and {@link UpgradeHandler}
- */
-export type SocketHandler = (
-  client: import('ws').WebSocket,
-  request: import('http').IncomingMessage,
-  server: import('ws').WebSocketServer,
-  context: { params: Record<string, string | string[]> },
-) => unknown;
+import type { NextRequest } from 'next/server';
+import type { WebSocket, WebSocketServer } from 'ws';
+import type { RouteContext } from './module.js';
 
 /**
- * WebSocket upgrade handler.
- * @param client WebSocket client instance
- * @param server WebSocket server instance
- * @param request Next.js request instance
- * @param context Route context
+ * WebSocket upgrade handler, exported as `UPGRADE` from a route file. Messages the client sends
+ * before the handler adds a `message` listener, or before it settles, are held rather than lost.
+ *
+ * @param context Route context, compatible with the `RouteContext` type Next.js generates
  */
 export type UpgradeHandler = (
-  client: import('ws').WebSocket,
-  server: import('ws').WebSocketServer,
-  request: import('next/server').NextRequest,
-  context: import('./module.js').RouteContext<string>,
+  client: WebSocket,
+  server: WebSocketServer,
+  request: NextRequest,
+  context: RouteContext<string>,
 ) => unknown;

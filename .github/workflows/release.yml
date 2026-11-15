@@ -1,0 +1,84 @@
+name: Release
+
+# Everything that happens once a change is on main. Pull requests
+# live in `pull-request.yml`, and the shared gate lives in `quality.yml`. A
+# manual dispatch runs that gate and stops there.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'mise.toml'
+      - 'src/**'
+      - 'tests/**'
+      - 'examples/**'
+      - '*.config.ts'
+      - 'tsconfig*.json'
+      - '.changeset/**'
+      - '.github/actions/**'
+      - '.github/workflows/release.yml'
+      - '.github/workflows/quality.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # Never cancel on main, it could interrupt a release part way through.
+  cancel-in-progress: false
+
+jobs:
+  quality:
+    name: Quality
+    uses: ./.github/workflows/quality.yml
+
+  process:
+    name: Processing Changesets
+    needs: [quality]
+    runs-on: ubuntu-latest
+    outputs:
+      hasChangesets: ${{ steps.changesets.outputs.has-changesets }}
+    if: ${{ github.event_name == 'push' }}
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Setup toolchain
+        uses: $/.github/actions/toolchain
+
+      - name: Process changesets
+        id: changesets
+        uses: changesets/action@v2.1.2
+        with:
+          version-script: pnpm run release:version
+          publish-script: pnpm run release:publish
+          pr-title: 'Pending Releases'
+          commit-message: 'Update changelog and release'
+
+  snapshot:
+    name: Releasing Snapshot
+    needs: [process]
+    runs-on: ubuntu-latest
+    # Betas preview changes that are waiting on a release, so this keys off
+    # pending changesets rather than off whether a publish happened.
+    if: ${{ needs.process.outputs.hasChangesets == 'true' }}
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Setup toolchain
+        uses: $/.github/actions/toolchain
+
+      - name: Publish snapshot version
+        run: |
+          pnpm run release:snapshot:version
+          pnpm run release:snapshot:publish

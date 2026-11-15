@@ -1,0 +1,20 @@
+# next@16.4.2
+===================================================================
+--- a/dist/server/lib/router-server.js
++++ b/dist/server/lib/router-server.js
+@@ -790,13 +790,13 @@
+             // TODO: allow upgrade requests to pages/app paths?
+             // this was not previously supported
+             if (matchedOutput) {
+-                return socket.end();
++                return /*next-ws:begin keep-socket-open "socket.end()"*/void 0/*next-ws:end keep-socket-open*/;
+             }
+             if (finished && parsedUrl.protocol) {
+                 if (!statusCode) {
+                     return await (0, _proxyrequest.proxyRequest)(req, socket, parsedUrl, head);
+                 }
+-                return socket.end();
++                return /*next-ws:begin keep-socket-open "socket.end()"*/void 0/*next-ws:end keep-socket-open*/;
+             }
+         // If there's no matched output, we don't handle the request as user's
+         // custom WS server may be listening on the same path.
