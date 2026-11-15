@@ -1,5 +1,26 @@
 # next-ws
 
+## 3.0.0
+
+### Major Changes
+
+- e29605d: Require Next.js 15.0.0 or later, Node.js 20.9 or later and ws 8 or later, remove the deprecated `SOCKET` handler and `next-ws/client` entry, and ship an ESM build alongside CommonJS.
+  
+  Replace the adapter's automatic relaying with rooms. Clients join rooms with `join()`, and `broadcast()` sends to a room on every instance through the adapter, which now only carries what is broadcast. `getClients()` lists a room's local clients.
+  
+  `context.params` in `UPGRADE` is now a promise, like in route handlers, so Next.js's own `RouteContext` type fits it. Its values can still be read without awaiting.
+  
+  `headers()` and `cookies()` resolve to a promise inside `UPGRADE`, as they do everywhere else in Next.js.
+
+### Minor Changes
+
+- 9ef5f30: Install with no dependencies, as the CLI bundles what it needs in place of jscodeshift. Patching now fails with a clear error when Next.js has changed, rather than appearing to succeed, writes nothing unless every step applies, cleanly replaces patches made by next-ws 2, and supports every Next.js 15 and 16 release without a next-ws update
+- 9ef5f30: Hold messages a client sends before `UPGRADE` listens for them, read the adapter and WebSocket server when they are first needed so `instrumentation.ts` can set them, wait for Next.js to finish starting before handling upgrades, leave unmatched upgrades to a custom server's own listeners, abort `request.signal` when the connection closes, match routes the way Next.js does (including parameter names such as `[post-id]`) and cache them in production
+
+### Patch Changes
+
+- e29605d: Fix `-y` and `-e` CLI flags, reject unmatched upgrades with an HTTP status, keep `headers()` and `cookies()` working inside socket event listeners, decode route params, match root routes, and stop malformed requests from crashing the server
+
 ## 2.2.19
 
 ### Patch Changes
