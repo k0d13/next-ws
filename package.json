@@ -66,28 +66,28 @@
     "test:unit": "vitest run --project unit --project patches"
   },
   "devDependencies": {
-    "@changesets/changelog-git": "^0.2.1",
-    "@changesets/cli": "^2.31.1",
+    "@changesets/changelog-git": "^1.0.0",
+    "@changesets/cli": "^3.0.3",
     "@favware/npm-deprecate": "^2.0.0",
-    "@types/node": "^24.19.2",
-    "@types/semver": "^7.7.1",
-    "@types/ws": "^8.18.1",
-    "@vitest/coverage-v8": "^4.1.11",
+    "@types/node": "^26.6.6",
+    "@types/semver": "^7.8.0",
+    "@types/ws": "^8.18.2",
+    "@vitest/coverage-v8": "^5.1.0",
     "acorn": "^8.19.0",
-    "chalk": "^5.6.2",
+    "chalk": "^6.0.1",
     "diff": "^9.0.0",
-    "knip": "^6.41.0",
+    "knip": "^6.45.1",
     "lefthook": "^2.2.2",
-    "magic-string": "^1.4.3",
+    "magic-string": "^1.4.5",
     "next": "catalog:",
-    "oxfmt": "^0.73.0",
-    "oxlint": "^1.88.0",
-    "semver": "^7.8.5",
-    "tar": "^7.5.22",
-    "tsdown": "^0.22.14",
-    "typescript": "^6.0.3",
-    "vitest": "^4.1.11",
-    "ws": "^8.22.0"
+    "oxfmt": "^0.78.0",
+    "oxlint": "^1.93.0",
+    "semver": "^7.8.6",
+    "tar": "^7.5.23",
+    "tsdown": "^0.23.7",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0",
+    "ws": "^8.23.0"
   },
   "peerDependencies": {
     "next": ">=15.0.0",
@@ -96,5 +96,5 @@
   "engines": {
     "node": ">=20.9.0"
   },
-  "packageManager": "pnpm@11.28.6"
+  "packageManager": "pnpm@12.21.0"
 }

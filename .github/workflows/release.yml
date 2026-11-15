@@ -37,7 +37,7 @@ jobs:
     needs: [quality]
     runs-on: ubuntu-latest
     outputs:
-      hasChangesets: ${{ steps.changesets.outputs.hasChangesets }}
+      hasChangesets: ${{ steps.changesets.outputs.has-changesets }}
     if: ${{ github.event_name == 'push' }}
     permissions:
       contents: write
@@ -46,21 +46,19 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.1
 
       - name: Setup toolchain
-        uses: ./.github/actions/toolchain
+        uses: $/.github/actions/toolchain
 
       - name: Process changesets
         id: changesets
-        # Pinned by digest. `@v1` upstream is a branch rather than a tag, so it
-        # moves on every commit, and this is the step that publishes to npm.
-        uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1.9.0
+        uses: changesets/action@v2.1.2
         with:
-          version: pnpm run release:version
-          publish: pnpm run release:publish
-          title: 'Pending Releases'
-          commit: 'Update changelog and release'
+          version-script: pnpm run release:version
+          publish-script: pnpm run release:publish
+          pr-title: 'Pending Releases'
+          commit-message: 'Update changelog and release'
 
   snapshot:
     name: Releasing Snapshot
@@ -75,10 +73,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.1
 
       - name: Setup toolchain
-        uses: ./.github/actions/toolchain
+        uses: $/.github/actions/toolchain
 
       - name: Publish snapshot version
         run: |

@@ -1,8 +1,11 @@
 {
   "recommendations": [
-    "oxc.oxc-vscode",
+    "fanaticpythoner.better-todo-tree",
     "streetsidesoftware.code-spell-checker",
-    "gruntfuggly.todo-tree",
-    "ms-playwright.playwright"
+    "streetsidesoftware.code-spell-checker-australian-english",
+    "hverlin.mise-vscode",
+    "oxc.oxc-vscode",
+    "typescriptteam.native-preview",
+    "github.vscode-github-actions"
   ]
 }

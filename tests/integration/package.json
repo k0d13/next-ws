@@ -8,6 +8,6 @@
     "next-ws": "workspace:^",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "ws": "^8.22.0"
+    "ws": "^8.23.0"
   }
 }

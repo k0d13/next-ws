@@ -1,5 +1,5 @@
 import type { AsyncLocalStorage } from 'node:async_hooks';
-import { RequestCookies } from 'next/dist/compiled/@edge-runtime/cookies';
+import { RequestCookies } from 'next/dist/compiled/@edge-runtime/cookies/index.js';
 
 /** Readonly {@link Headers} implementation. */
 class ReadonlyHeaders extends Headers {

@@ -15,10 +15,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.1
 
       - name: Setup toolchain
-        uses: ./.github/actions/toolchain
+        uses: $/.github/actions/toolchain
 
       - name: Build the package
         run: pnpm build
@@ -28,10 +28,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.1
 
       - name: Setup toolchain
-        uses: ./.github/actions/toolchain
+        uses: $/.github/actions/toolchain
 
       - name: Types
         run: pnpm check:types
@@ -50,14 +50,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.1
 
       - name: Setup toolchain
-        uses: ./.github/actions/toolchain
+        uses: $/.github/actions/toolchain
 
       # The patch snapshot tests read real Next.js files out of published tarballs
       - name: Cache Next.js tarballs
-        uses: actions/cache@v4
+        uses: actions/cache@v6.1.0
         with:
           path: node_modules/.cache/next-ws
           key: next-dist-${{ hashFiles('src/patches/**') }}
@@ -67,7 +67,7 @@ jobs:
         run: pnpm coverage
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7
+        uses: codecov/codecov-action@v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: .coverage/lcov.info
@@ -94,17 +94,17 @@ jobs:
           --health-retries 10
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.1
 
       - name: Setup toolchain
-        uses: ./.github/actions/toolchain
+        uses: $/.github/actions/toolchain
 
       - name: Install the Next.js version under test
         run: pnpm --filter @next-ws/integration-tests add next@${{ matrix.next }}
 
       # The CLI tests patch real Next.js files out of a published tarball
       - name: Cache Next.js tarballs
-        uses: actions/cache@v4
+        uses: actions/cache@v6.1.0
         with:
           path: node_modules/.cache/next-ws
           key: next-dist-${{ hashFiles('src/patches/**') }}
@@ -120,10 +120,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.1
 
       - name: Setup toolchain
-        uses: ./.github/actions/toolchain
+        uses: $/.github/actions/toolchain
 
       # `next build` type checks each example as well, so they cannot quietly go stale
       - name: Build every example

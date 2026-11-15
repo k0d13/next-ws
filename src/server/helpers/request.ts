@@ -1,5 +1,5 @@
 import type { IncomingMessage } from 'node:http';
-import { NextRequest } from 'next/server';
+import { NextRequest } from 'next/server.js';
 
 /**
  * Convert a Node.js HTTP incoming message instance to a Next.js request instance.
